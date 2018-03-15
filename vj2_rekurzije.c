@@ -153,7 +153,7 @@ void f(int a[], int n)
 Uočite da ovdje baza ne ovisi o samo jednom argumentu.
 */
 /*
-int REK_SESTI_f(int x, int n, int k)
+int f(int x, int n, int k)
 {
   if (x == n)
     return 1;
