@@ -80,7 +80,8 @@ SAMI: promijenite ispis tako da za n = 5 dobijete:
 SAMI*: nacrtajte stablo poziva za mali n i pokušajte precizno formulirati zašto
 nije bilo potrebno kopirati niz (odnosno, zašto smo mogli stalno koristiti isti niz).
 
-SAMI* [teško]: implementirajte ovu funkciju bez velikog pomoćnog niza i bez nestandardnih biblioteka.
+SAMI*: implementirajte funkciju iz 3. zadatka bez velikog pomoćnog niza i bez nestandardnih biblioteka.
+SAMI* [teško]: implementirajte funkciju iz 2. zadatka bez velikog pomoćnog niza i bez nestandardnih biblioteka.
 */
 /*
 void f(int n, int max, int pom[100], int i) // može i int pom[]
