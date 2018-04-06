@@ -109,17 +109,18 @@ double **umnozak(double **X, double **Y, int m, int n, int k)
 */
 
 /*
- 4. Učitajte tablicu **x sastavljenu od pozitivnih prirodnih brojeva.
-    Tablica ima m > 0 redaka, svaki redak ima n_i + 1 stupaca, a sastoji se od samog broja n_i,
-    nakon kojeg slijedi još n_i brojeva.
-    Primjer ulaza:
+   Učitajte tablicu **x sastavljenu od prirodnih brojeva.
+   Tablica ima m > 0 redaka, svaki redak ima n_i + 1 stupaca,
+   a sastoji se od prirodnog broja n_i,
+   nakon kojeg slijedi još n_i brojeva (n_i >= 0).
+   Primjer ulaza:
       4
-      3 1 2 3
+      3 1 3 2
       2 4 5
       0
-      2 6 7
-    Sortirajte retke unutar tablice uzlazno po sumi svih elemenata retka osim prvog (n_i),
-      a unutar pojedinog retka (osim prvog stupca), stupce sortirajte uzlazno.
+      2 7 6
+   Sortirajte retke unutar tablice uzlazno po sumi svih elemenata retka osim prvog (n_i),
+     a unutar pojedinog retka (osim prvog stupca), stupce sortirajte uzlazno.
 */
 void tablica()
 {
