@@ -97,7 +97,8 @@ Sve to radi naredba:
  a = (tip*) realloc(a, nova_velicina_u_bajtovima);
 ako je _prije_ poziva a == 0, realloc se ponaša kao malloc.
 
-Moguće je da realloc neke korake preskoči, no C ne garantira niti "očito" izvedive optimizacije
+Moguće je da realloc neke korake preskoči (npr. ako je nova veličina ista kao stara, nije potrebno ništa napraviti), 
+no C ne garantira niti "očito" izvedive optimizacije
   - zato je uvijek bitno spremiti novu adresu!
 
 1. Implementirajte funkciju void* realok(void* ulaz, size_t n, size_t m) koja simulira funkciju realloc,
@@ -176,13 +177,13 @@ void tablica2() /* (u ovom fileu već imamo funkciju "tablica") */
     do /* ucitavanje stupaca */
     {
       scanf("%d", &ulaz);
-      if (n == 0 && ulaz > 0) /* novi redak - tj., novi član niza t pokazivača na retke? */
+      if (n == 0 && ulaz != 0) /* novi redak - tj., novi član niza t pokazivača na retke? */
       {
         ++m;
         t = (int**) realloc(t, m * sizeof(int*));
         t[m - 1] = 0;
       }
-      if (n > 0 || ulaz > 0) /* novi stupac? */
+      if (n > 0 || ulaz != 0) /* novi stupac? */
       {
         ++n;
         t[m - 1] = (int*) realloc(t[m - 1], n * sizeof(int));
