@@ -209,7 +209,7 @@ void tablica2() /* (u ovom fileu već imamo funkciju "tablica") */
   for (i = 0; i < m; ++i)
   {
     printf("\n");
-    for (j = 0; t[i][j] > 0 ; ++j)
+    for (j = 0; t[i][j] != 0 ; ++j)
       printf("%d ", t[i][j]);
     free(t[i]);
     free(t);
