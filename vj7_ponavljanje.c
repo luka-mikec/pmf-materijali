@@ -4,6 +4,9 @@
 #include <string.h>
 #include <math.h>
 
+/* Rjesenja zadataka s prvog kolokvija 16/17. Neka rjesenja su vrlo slicna sluzbenima, neka su drugacija. */ 
+
+
 /*
     1. zadatak (usporedite s https://github.com/luka-mikec/pmf-materijali/blob/master/vj2_rekurzije.c#L35)
 */
