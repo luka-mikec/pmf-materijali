@@ -141,7 +141,7 @@ char** igraj(char **buseni, int *korak, int *broj_mrkvi, int **dimenzije, int **
     scanf("%d", &lokacija);
     (*indeksi)[*korak] = lokacija;
 
-    /* koji je znak upisan? */
+    /* koji je znak odabran? */
     znak = buseni[*korak][lokacija];
 
     if(znak == '$')
