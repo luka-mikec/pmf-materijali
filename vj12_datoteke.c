@@ -200,6 +200,92 @@ int main_2(int argc, char **argv)
   fclose(f);
 }
 
+
+
+
+/*
+ 3. (ovaj zadatak se nije stigao riješiti na vježbama 12; na vježbama 13 će se dovršiti prethodni zadatak, te raditi zadaci koje su studenti predložili)
+
+   Pohranjuju se zapisi o položenim ispitima, koji sadrže sljedeće podatke: student (string do 50 znakova, koji ne sadrži ':'), 
+     kolegij (string do 100 znakova, koji ne sadrži '/') i ocjena (cijeli broj).
+   Niz redova oblika
+     student:kolegij/ocjena
+   čuva se u __tekstualnoj__ datoteci ocjene.txt.
+
+   Napišite dio programa koji ispisuje sve studente i njihove prosjeke u datoteku studenti.txt, sortirane silazno po prosjecima.
+   Redak treba biti oblika
+    prezime ime: prosjek
+   a prosjek je zaokružen na tri decimale.
+
+   Biti će najviše 100 studenata. Možete ih čuvati u pomoćnom nizu.
+*/
+
+
+typedef struct _student
+{
+    int suma_ocjena;
+    int broj_ocjena;
+    char ime[51];
+} student;
+
+void rjesenje_3()
+{
+  student s[100];
+
+  int n = 0; /* broj studenata */
+  int i, j;
+
+  /* pomocne varijable za ucitavanje: */
+  char ime[51];
+  char kolegij[101];
+  int ocjena;
+
+  FILE *f = fopen("ocjene.txt", "r");
+  FILE *g = fopen("studenti.txt", "w");
+
+  if (f == 0 || g == 0)
+    exit(1);
+
+  while (fscanf(f, "%[^:]:%[^/]/%d\n", ime, kolegij, &ocjena) == 3)
+  {
+    /* printf(".%s.%s.%d.\n", ime, kolegij, ocjena); */
+
+    /* gdje umetnuti studenta? */
+    for (i = 0; i < n; ++i)
+      if (strcmp(ime, s[i].ime) == 0)
+        break;
+
+    if (i == n) /* prvi zapis za ovog studenta, treba inicijalizirati njegove varijable */
+    {
+      s[i].suma_ocjena = 0;
+      s[i].broj_ocjena = 0;
+      strcpy(s[i].ime, ime);
+      ++n;
+    }
+
+    s[i].suma_ocjena += ocjena;
+    ++s[i].broj_ocjena;
+  }
+
+  for (i = 0; i < n; ++i)
+    for (j = i + 1; j < n; ++j)
+      if (s[i].suma_ocjena * s[j].broj_ocjena < s[j].suma_ocjena * s[i].broj_ocjena)
+      {
+          student tmp = s[i];
+          s[i] = s[j];
+          s[j] = tmp;
+      }
+
+  for (i = 0; i < n; ++i)
+    fprintf(g, "%s %s: %.3lf\n", s[i].prezime, s[i].ime, (double)s[i].suma_ocjena/s[i].broj_ocjena);
+
+  fclose(f);
+  fclose(g);
+}
+
+
+
+
 int main(int argc, char **argv)
 {
   main_2(argc, argv);
