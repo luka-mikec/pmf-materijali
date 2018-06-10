@@ -87,7 +87,7 @@
 void rjesenje_1()
 {
   int n = 0;
-  char c;
+  int c;
   FILE *ulaz, *izlaz;
   if ((ulaz = fopen("ulaz.txt", "r")) == 0)
     exit(1);
@@ -127,10 +127,10 @@ void rjesenje_1()
       - naredbe: možda prazan niz naredbi odvojenih bjelinama, koji sadrži najviše 100 naredbi.
 
      Naredba ima jedan od sljedećih oblika:
-      - ispis n, gdje je n pozitivan prirodan broj,
-      - poziv n ime, gdje je n pozitivan prirodan broj, a ime je ime neke procedure (vidi gore).
+      - ispis n, gdje je n prirodan broj,
+      - poziv n ime, gdje je n prirodan broj, a ime je ime neke procedure (vidi gore).
 
-     Nakon učitavanja izvršite proceduru main. Izlaz zapišite u istu datoteku.
+     Nakon učitavanja (možete koristiti pomoćni niz) izvršite proceduru main. Izlaz zapišite u istu datoteku.
      Pretpostavite da je datoteka sintaksno ispravna.
      Možete koristiti string.h.
 
@@ -181,10 +181,10 @@ int main_2(int argc, char **argv)
   /* kroz sve procedure */
   for (i = 0; i < 100; ++i)
   {
-    a[i].n = 0;
     fscanf(f, " def %s", a[i].ime); /* razmak na pocetku je bitan! */
     if (feof(f)) break;
 
+    a[i].n = 0;
     /* kroz sve naredbe u proceduri */
     for (j = 0; j < 100; ++j)
     {
