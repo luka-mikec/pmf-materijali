@@ -7,7 +7,7 @@ Password se neće prikazati dok ga upisujete. Enter kad ste upisali.
 Ako ima pitanja prije ili poslije upisa passworda, yes pa enter.
 Sada ste u svojem direktoriju na računalu student, /home/student1/korisnicko_ime.
 
-Izrada nove datoteke: vidi [vj1_uvod.c](prve vježbe), pod "cat >" i "cat". 
+Izrada nove datoteke: vidi [prve vježbe](vj1_uvod.c), pod "cat >" i "cat". 
 
 Svoje web stranice možete postaviti u direktorij public_html.
 Bit će dostupne na adresi:
