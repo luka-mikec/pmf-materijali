@@ -46,6 +46,7 @@ Provjerite radi li stranica. Ponovite postupak za proizvoljnu slikovnu datoteku 
 
 Ideja: spajati se na Internet kroz neko drugo računalo, s kojim imamo kriptiranu vezu.
 >    Naše računalo ===sigurna veza (kriptirana)=== udaljeno računalo --- Internet
+
 Svrhe:
 
  - kad smo na nesigurnoj mreži i želimo kriptirati čitav promet (neke stranice kriptiraju same, neke ne)
@@ -67,7 +68,7 @@ Provjerite IP adresu koristeći neku stranicu koja vam javlja vašu IP adresu.
 (na ovim vježbama meni nije radio CodeBlocks, pa smo ručno kompajlali)
 
 Program (spremite ga u bilo kojem editoru teksta):
- (u datoteci vj2_ponavljanje.c)
+> (program je u datoteci [vj2_ponavljanje.c](vj2_ponavljanje.c))
 
 Kompajlanje (ako ne radi CodeBlocks ili drugi program):
  - otvorite terminal, upišite cd adresa-direktorija-gdje-ste-spremili-main.c
