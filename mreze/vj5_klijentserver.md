@@ -1,6 +1,6 @@
 Službena rješenja vježbi su na [webu kolegija](https://web.math.pmf.unizg.hr/nastava/mreze/slideovi.php)
 
-Primjer kompilacije i komunikacije sa daytime serverom na portu 13 racunala 128.138.141.172:
+Primjer kompilacije i komunikacije sa daytime serverom na portu 13 računala 128.138.141.172:
 > cd (direktorij gdje je daytime_client.c)
 > gcc daytime_client.c -o klijent
 > ./klijent 128.138.141.172 13
