@@ -38,32 +38,6 @@ Kad server pokrećete na vlastitom računalu (što je nama uobičajeno), njegova
 
 U terminalu izvođenje servera prekidamo pritiskom na Ctrl + C.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Napomene za *web_client.c*:
+ - buffer (tj. *char webStranica[20000]*) povećajte barem nekoliko puta - 20kB vjerojatno nije dovoljno
+ - spajanje će raditi samo za HTTP (ne HTTPS) servere, takvi su danas rijetkost; npr. [http://degiorgi.math.hr/forum/](http://degiorgi.math.hr/forum/)
