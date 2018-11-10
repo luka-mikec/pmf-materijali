@@ -29,20 +29,20 @@ Na serverskoj strani, u slučaju primitka nove poruke pozivamo odgovarajuću fun
 case POPIS: obradiPOPIS( sock, poruka ); break;
 ```
 
-Tu funkciju (`void obradiPOPIS( int sock, char \*poruka );`) deklariramo negdje iznad, npr. tamo gdje su i ostale deklaracije.
+Tu funkciju (`void obradiPOPIS( int sock, char *poruka );`) deklariramo negdje iznad, npr. tamo gdje su i ostale deklaracije.
 Jedna moguća implementacija je:
 
 ```c
 void obradiPOPIS( int sock, char *poruka )
 {
-    posaljiPoruku( sock, ODGOVOR, "OK"); /\* ne moze biti los zahtjev za popisom \*/
+    posaljiPoruku( sock, ODGOVOR, "OK"); /* ne moze biti los zahtjev za popisom */
     
     int duljina = 1;
     for( i = 0; i < brojArtikala; ++i )
         duljina += strlen(imeArtikla[i]) + 1;
 
-    char \*odg = (char \*)malloc(duljina \* sizeof(char));
-    \*odg = '\0'; /* ili strcpy(odg, ""); */
+    char *odg = (char *)malloc(duljina * sizeof(char));
+    *odg = '\0'; /* ili strcpy(odg, ""); */
 
     for( i = 0; i < brojArtikala; ++i )
     {
