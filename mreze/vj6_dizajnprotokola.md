@@ -12,7 +12,7 @@ Na vrhu tih (pomoćnih) datoteka nalaze se upute oko kompilacije i pokretanja.
 Komentirali smo razne tipove grešaka koje se mogu javiti:
  - funkcije *posaljiPoruku()* odnosno *primiPoruku()* vraćaju brojevne konstante OK ili NIJEOK. To je greška u komunikaciji najniže razine: npr. dio poruke nije stigao, klijentsko ili serversko računalo su u kvaru itd.
  - moguće je da poruka ispravno stigne, ali da to nije očekivan tip poruke. Primjerice, stigne poruka BOK umjesto poruke ODGOVOR.
- - moguće je da je stigla očekivana poruka, ali da postoji neki problem vezan uz logiku protokola, npr. poruka "UZMI stvar 10" kad je stanje *stvari* na skladištu 9.
+ - moguće je da je stigla očekivana poruka, ali da postoji neki problem vezan uz logiku protokola, npr. poruka "UZMI stvar 10" kad je stanje *stvari* na skladištu 9. U našem protokolu, server tada u tijelo poruke ispisuje informaciju o grešci.
 
 
 ## Dodavanje nove funkcionalnosti u protokol skladišta
