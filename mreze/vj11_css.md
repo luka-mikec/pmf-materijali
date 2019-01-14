@@ -20,7 +20,9 @@ Postoje tri mjesta na kojima se mogu nalaziti CSS pravila.
    ```
    <head>
      ...
-     <link rel="stylesheet" href="ime_datoteke.css" />
+     <style>
+       ...
+     </style>
      ...
    </head>
    ```
@@ -44,8 +46,20 @@ Deklaracije imaju oblik: `ime: vrijednost;`, npr. `color: blue;` ili `border: so
 
 U pravilima, `selektor` je najčešće:
  - neki tag (bez simbola &lt; i &gt;), npr. `p`, 
- - ime neke klase koju smo odlucili definirati, npr. `.vazno` (dodajemo točku ispred imena klasa),
+ - ime neke klase koju smo odlučili definirati, npr. `.vazno` (dodajemo točku ispred imena klasa),
  - ili ime identifikatora, npr. `#copyright_poruka` (dodajemo ljestve ispred imena identifikatora).
+
+U slučaju klasa i identifikatora HTML elemente označavamo na sljedeći način: 
+```
+<neki-tag id="moj-identifikator" class="moja-klasa1 moja-klasa2 ... moja-klasan"> ... </neki-tag>
+```
+
+U CSS-u bismo referirali na njih na sljedeći način (dodajemo točke i ljestve):
+```
+#moj-identifikator { ... }
+.moja-klasa1 { ... }
+...
+```
 
 Od složenijih selektora, neki česti scenariji su:
  - isti niz deklaracija želimo primijeniti na više selektora koji ne moraju biti ni u kojem odnosu. Npr. `p, .vazno { color: yellow; }` će obojati sve paragrafe, i sve objekte s klasom `vazno`. (Uočite **zarez**, bez njega bi efekt ovog pravila bio bitno drukčiji.)
