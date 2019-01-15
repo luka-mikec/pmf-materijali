@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="hr">
+  <head>
+    <meta charset="UTF-8">
+    
+    <title>Drugi zadatak</title>    
+    
+    <style>
+      header, aside, article, footer { 
+        border: 1px solid lightgrey; 
+        box-sizing: border-box; /* nije nužno - vidi komentar u HTML-u */
+      }
+      
+      header {
+        margin-top: 10px;
+        margin-bottom: 10px;
+        background: lightblue;
+      }
+      
+      footer {
+        clear: both;
+      }
+          
+      #sadrzaj {
+        width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      
+      /* pravila samo za vece ekrane: */
+      @media screen and (min-width: 800px) {
+        #sadrzaj {
+          width: 800px;
+        }
+        
+        aside {
+          float: right;
+          width: 20%;
+        }
+        
+        article {
+          float: left;
+          width: 75%;        
+        }
+      }
+    </style>
+  </head>
+  
+  <body>
+    <div id="sadrzaj">
+    
+      <header>
+        <h1>Naslov stranice</h1>
+      </header>
+      
+      <aside>
+        tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst teksttekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst teksttekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst
+      </aside><article> <!-- ne smije biti razmaka izmedu </aside> i <article>, u slucaju
+                             da zelimo da se dodiruju, npr. da su im veličine 75%, 25%;
+                             ako to želimo, onda i box-sizing treba postaviti na border-box,
+                             kako bi se širine rubova uračunale u veličinu ovih elemenata -->
+      tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst teksttekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst teksttekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst teksttekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst teksttekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst teksttekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst
+      </article>
+      
+      <footer>
+      tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst teksttekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst teksttekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst teksttekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst teksttekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst teksttekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst teksttekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst teksttekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst tekst
+      </footer>
+    
+    </div>
+  </body>
+</html>
