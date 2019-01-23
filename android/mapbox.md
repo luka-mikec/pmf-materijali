@@ -25,7 +25,7 @@
     compile 'com.mapbox.mapboxsdk:mapbox-android-sdk:6.6.0'
     ```
     Ako koristite noviji Android Studio, vjerojatno neće trebati dodati `jackOptions`, a u posljednjem retku umjesto `compile` vjerojatno treba pisati `implementation`.
-5. U `build.gradle` (za **projekt**) unutar **obje** repositories {} grupe dodajte ono što nedostaje od sljedećeg sljedeće:
+5. U `build.gradle` (za **projekt**) unutar **obje** repositories {} grupe dodajte ono što nedostaje od sljedećeg:
     ```xml
     google()
     jcenter()

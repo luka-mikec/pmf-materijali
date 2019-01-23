@@ -30,7 +30,5 @@
         android:title="Get Current Location"/>
     <item
         android:id="@+id/menu_lineconnecttwopoints"
-        android:orderInCategory="100"
-        android:title="Line connecting 2 points"/>
-  </menu>
+        android:orderInCategory[32;1H[?1049l[23;0;0t[?1l>[32;1H[?1049l[23;0;0t[?1l>nu>
 
