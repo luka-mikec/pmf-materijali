@@ -1,7 +1,7 @@
 # Mapbox
 
 1. Stvorite novi projekt, 4.0.3, praznu aktivnost.
-2. File -> Project Structure -> Gradle version: 4.10.1
+2. File -> Project Structure -> Project -> Gradle version: 4.10.1
 3. Unutar `manifest` taga `AndroidManifest.xml` datoteke dodajte 
 	```xml
 	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -31,7 +31,11 @@
     jcenter()
     mavenCentral()
     ```
-6. U `res/values/strings.xml` dodajte novi string imena *access_token*, a vrijednost postavite na ključ koji možete (bez dodavanja načina plaćanja) generirati na [stranicama *Mapboxa*](https://www.mapbox.com/signup/). Možete koristiti i [ovaj ključ](https://web.math.pmf.unizg.hr/~lmikec/auth/mapbox_access_token.txt). 
-7. Ovo je dobar trenutak da provjerite je li instalacija *Mapboxa* uspješna. Sinkronizirajte *Gradle* skripte i probajte pokrenuti projekt. (Ne biste još trebali vidjeti karte.)
+6. Ovo je dobar trenutak da provjerite je li instalacija *Mapboxa* uspješna. Sinkronizirajte *Gradle* skripte i probajte pokrenuti projekt. (Ne biste još trebali vidjeti karte.)
+7. U `res/values/strings.xml` dodajte novi string imena *access_token*, a vrijednost postavite na ključ koji možete (bez dodavanja načina plaćanja) generirati na [stranicama *Mapboxa*](https://www.mapbox.com/signup/). Možete koristiti i [ovaj ključ](https://web.math.pmf.unizg.hr/~lmikec/auth/mapbox_access_token.txt). 
 8. Izradite datoteku [res/menu/mainmenu.xml](mapbox/mainmenu.xml). Zamijenite sadržaje datoteka [MainActivity.java](mapbox/MainActivity.java) i [activity_main.xml](mapbox/activity_main.xml).
 9. Dodajte ispravan *package* na vrhu `MainActivity.java` datoteke.
+
+---
+
+URL-i spomenuti na vježbama: https://docs.mapbox.com/api/maps/#styles
