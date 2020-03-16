@@ -160,7 +160,7 @@ int max_stupac(double a[10][10], int m)
     return max_ind;
 }
 
-/* SAMI: umjesto vraćanja jednog indeksa, neka funkcija primi i niz b,
+/* ZADATAK: umjesto vraćanja jednog indeksa, neka funkcija primi i niz b,
    te postavi vrijednost b[j] na 1 ako i samo ako j-ti stupac ima najveću sumu, inace b[j] treba biti 0 */
 
 
