@@ -169,7 +169,7 @@ void transp(double a[10][10], int m)
 {
     int i, j;
     for (i = 0; i < m; ++i) /* kroz svaki redak */
-        for (j = i+1; j < m; ++j) /* kroz NE SVAKI stupac ;-) */
+        for (j = i + 1; j < m; ++j) /* kroz svaki stupac ispod dijagonale */
         {
             double tmp = a[i][j];
             a[i][j] = a[j][i];
