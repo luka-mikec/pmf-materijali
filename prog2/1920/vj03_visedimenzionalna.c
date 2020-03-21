@@ -104,8 +104,8 @@ int dt(double a[10][10], int m)
     for (i = 0; i < m; ++i) /* kroz svaki redak */
         for (j = i + 1; j < m; ++j) /* kroz svaki stupac s indeksom većim od indeksa retka, ponovno "m" jer je matrica kvadratna */
             if (a[i][j] != 0)
-                return 0; /* 0: matrica nije kvadratna */
-    return 1; /* 1: matrica je kvadratna */
+                return 0; /* 0: matrica nije donjetrokutasta */
+    return 1; /* 1: matrica je donjetrokutasta */
 }
 
 /* c) upisuje 0 na sporednu dijagonalu */
