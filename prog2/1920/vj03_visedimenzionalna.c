@@ -6,7 +6,7 @@
   To je polje sastavljeno od n_1 manjih polja, gdje je svako manje polje polje od n_2 (još) manjih polja itd.
 
   Dvodimenzionalno polje  tip ime[m][n]  je polje sastavljeno od m manjih polja, 
-  gdje je svako manje polje neko n-člano polje cijelih brojeva.
+  gdje je svako manje polje neko n-člano polje.
 
   Dvodimenzionalno  tip ime[m][n]  polje često shvaćamo kao matricu,
   vrijednost m tada obično interpretiramo kao broj redaka, a vrijednost n kao broj stupaca matrice.
