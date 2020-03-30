@@ -210,7 +210,7 @@ double **umnozak(double **X, double **Y, int m, int n, int k)
 
 
 /*
- 2. U ovom zadatku cilj je implementirati igru minesweeper.
+ 4. U ovom zadatku cilj je implementirati igru minesweeper.
 
     Igra se igra na ploči dimenzija m * n; m, n > 1.
 
