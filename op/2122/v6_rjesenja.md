@@ -65,21 +65,21 @@ std::ostream &operator<<(std::ostream &os, niz<T> a) {
 ### Zadatak 3
 
 ```c++
-void serializiraj(std::ostream& o, const std::string& s) {
+void serijaliziraj(std::ostream& o, const std::string& s) {
     size_t n = s.size();
     o.write(reinterpret_cast<char*>(&n), sizeof(n));
     o.write(&s[0], n);  // Mogli smo i slovo-po-slovo, ili koristeći funkciju c_str
 }
 
 template<class T>
-void serializiraj(std::ostream& o, const std::vector<T>& v) {
+void serijaliziraj(std::ostream& o, const std::vector<T>& v) {
     size_t n = v.size();
     o.write(reinterpret_cast<char*>(&n), sizeof(n));
     for (size_t j = 0; j < n; ++j)
-        serializiraj(o, v[j]);
+        serijaliziraj(o, v[j]);
 }
 
-void deserializiraj(std::istream& i, std::string& s) {
+void deserijaliziraj(std::istream& i, std::string& s) {
     size_t n;
     i.read(reinterpret_cast<char*>(&n), sizeof(n));
     s = std::string(n, ' ');
@@ -87,23 +87,23 @@ void deserializiraj(std::istream& i, std::string& s) {
 }
 
 template<class T>
-void deserializiraj(std::istream& i, std::vector<T>& v) {
+void deserijaliziraj(std::istream& i, std::vector<T>& v) {
     size_t n;
     i.read(reinterpret_cast<char*>(&n), sizeof(n));
     v.resize(n);
     for (size_t j = 0; j < n; ++j)
-        deserializiraj(i, v[j]);
+        deserijaliziraj(i, v[j]);
 }
 
 int main() {
     std::vector<std::string> vec{"abc", "def", "ghi"};
     std::ofstream izlazna_datoteka("binarna_datoteka.bin", std::ios::binary);
-    serializiraj(izlazna_datoteka, vec);
+    serijaliziraj(izlazna_datoteka, vec);
     izlazna_datoteka.close();
 
     vec.resize(0);
     std::ifstream ulazna_datoteka("binarna_datoteka.bin", std::ios::binary);
-    deserializiraj(ulazna_datoteka, vec);
+    deserijaliziraj(ulazna_datoteka, vec);
     for (auto val : vec)
         std::cout << val << std::endl;
 
