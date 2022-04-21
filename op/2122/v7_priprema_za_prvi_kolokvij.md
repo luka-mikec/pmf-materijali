@@ -87,6 +87,7 @@ public:
  int value() { return 2; }
 };
 int main() {
+ B x;
  A& y = x;  // U redu: referenca na baznu klasu može čuvati objekt izvedene klase
  A z = x;  // Kompajlira se, ali gotovo nikad to ne želimo ("slicing"), u kopiji nema dijela objekta koji pripada klasi B
  cout << x.vrijednost() << endl;  // Funkcija vrijednost poziva virtualnu funkciju value, koja vraća 2
