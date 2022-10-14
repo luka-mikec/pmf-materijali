@@ -45,7 +45,7 @@ nmap adresa
  - pretražuje otvorene portove na nekom računalu, npr. zanima nas postoje li na nekom računalu web stranice
  - za skeniranje i prikaz svih računala u lokalnoj mreži: nmap -sn (vidi i dolje, ping)
  - u PR1 nije instaliran, ali možete ga instalirati kod sebe
- - npr. ako je naša IP adresa (vidi ifconfig) 100.100.100.1, pokretanje nmap -sn 100.100.100.* bu na kućnom računalu trebalo ispisati ostala računala (također mobitele itd.)
+ - npr. ako je naša IP adresa (vidi ifconfig) 100.100.100.1, pokretanje nmap -sn 100.100.100.* bi na kućnom računalu trebalo ispisati ostala računala (također mobitele itd.)
 
 ping adresa
  - je li neko računalo dostupno za mrežnu komunikaciju?
