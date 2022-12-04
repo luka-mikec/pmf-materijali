@@ -1,0 +1,32 @@
+{
+    "ime": "Recept A",
+    "sastojci": [
+        {
+            "ref": "a.json#X/sastojci/1"
+        },
+        {
+            "ime": "X",
+            "sastojci": [
+                {
+                    "ref": "a.json#Y/sastojci/1"
+                }
+            ]
+        },
+        {
+            "ime": "Y",
+            "sastojci": [
+                {
+                    "ref": "a.json#Sastojak koji ce se ponoviti"
+                }
+            ]
+        },
+        {
+            "sastojci": [
+                {
+                    "ime": "Sastojak koji ce se ponoviti",
+                    "kolicina": 1
+                }
+            ]
+        }
+    ]
+}

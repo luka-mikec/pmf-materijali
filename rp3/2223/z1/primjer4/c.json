@@ -1,0 +1,17 @@
+{
+    "ime": "Recept C",
+	"sastojci": [
+	    {
+            "ref": "a.json#Recept A/sastojci/1"
+        },
+		{
+			"ime": "X",
+			"sastojci": [
+				{
+					"ime": "Sastojak",
+					"kolicina": 314
+				}
+			]
+		}
+	]
+}

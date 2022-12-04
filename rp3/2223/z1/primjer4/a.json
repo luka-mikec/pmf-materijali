@@ -1,0 +1,8 @@
+{
+    "ime": "Recept A",
+    "sastojci": [
+        {
+            "ref": "b.json#X/sastojci/1"
+        }
+	]
+}

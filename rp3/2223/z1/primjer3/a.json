@@ -1,0 +1,15 @@
+{
+    "ime": "Recept A",
+    "koraci": [
+        "Korak 1",
+        {
+            "ref": "b.json#Recept B/koraci/3"
+        },
+        {
+            "ref": "b.json#Recept B/koraci/2"
+        },
+        {
+            "ref": "b.json#Recept B/koraci/4"
+        }
+    ]
+}

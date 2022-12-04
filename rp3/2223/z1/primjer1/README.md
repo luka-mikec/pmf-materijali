@@ -1,0 +1,5 @@
+Naredba: `.\ime_programa.exe slatka_sol.json`
+Mogući izlaz:
+```JSON
+{"ime":"Slatka sol","sastojci":[{"ime":"secer","kolicina":100},{"ime":"sol","kolicina":1000},{"ime":"Led (ovo je primjer grupe sastojaka)","sastojci":[{"ime":"usitnjen led","kolicina":100},{"ime":"kockice leda","kolicina":100}]}],"koraci":["Pripremite dvije posude",{"ime":"Vaganje","koraci":["Izvazite secer","Izvazite sol"]},"Pomijesajte sadrzaj posuda","Dodajte jos secera po ukusu"],"posluzivanje":["Ukrasite ledom"]}
+```
