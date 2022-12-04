@@ -1,17 +1,17 @@
 {
     "ime": "Recept C",
-	"sastojci": [
-	    {
+    "sastojci": [
+        {
             "ref": "a.json#Recept A/sastojci/1"
         },
-		{
-			"ime": "X",
-			"sastojci": [
-				{
-					"ime": "Sastojak",
-					"kolicina": 314
-				}
-			]
-		}
-	]
+        {
+            "ime": "X",
+            "sastojci": [
+                {
+                    "ime": "Sastojak",
+                    "kolicina": 314
+                }
+            ]
+        }
+    ]
 }
