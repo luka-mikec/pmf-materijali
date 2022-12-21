@@ -1,4 +1,4 @@
-Naredba: `.\ime_programa.exe a.json`
+Naredba: `.\ime_programa.exe c.json`
 
 Mogući izlaz:
 ```JSON
