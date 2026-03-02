@@ -43,8 +43,7 @@ Zatražite [Student Developer Pack](https://education.github.com/pack).
 Softver za računalo koje ćete koristiti za rad na kolegiju. Svi materijali pretpostavljaju da radite na Linuxu. Za Mac će postupci biti uglavnom isti ili slični. Za Windowse, postavite WSL (Windows Subsystem for Linux) i sve alate (Azure CLI, Docker, NVM/Node, pyenv/Python) instalirajte unutar WSL-a. Također, u tom slučaju neka je vaš kod na 'disku' WSL-a. I dalje možete koristiti svoj IDE (JetBrains, VS Code, ...).
 - [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) za postavljanje Azure resursa, opisan detaljnije iznad u ovoj datoteci.
 - [Docker](https://docs.docker.com/get-docker/) kako biste mogli lokalno izgraditi Docker slike koje će se kopirati na Azure. Nije vam potreban Docker Desktop (komercijalan alat).
-- [Docker Compose](https://docs.docker.com/compose/), opcionalno, ako želite na svojem računalu pokretati Docker slike. Ovisno o tome kako instalirate Docker, Docker Desktop trebao bi doći predinstaliran s Dockerom.
-- [Node.js](https://nodejs.org/) verzije 24 ili noviji. Preporuka: umjesto da instalirate Node.js direktno, instalirajte [NVM](https://github.com/nvm-sh/nvm) kako biste mogli koristiti više Node verzija na istom računalu. Kroz NVM možete instali
-rati Node 24 ili noviji (trenutno je 25 aktualan).
+- [Docker Compose](https://docs.docker.com/compose/), opcionalno, ako želite na svojem računalu pokretati Docker slike. Ovisno o tome kako instalirate Docker, Docker Compose trebao bi doći predinstaliran s Dockerom.
+- [Node.js](https://nodejs.org/) verzije 24 ili noviji. Preporuka: umjesto da instalirate Node.js direktno, instalirajte [NVM](https://github.com/nvm-sh/nvm) kako biste mogli koristiti više Node verzija na istom računalu. Kroz NVM možete instalirati Node 24 ili noviji (trenutno je 25 najnovija dostupna verzija).
 - [Python](https://www.python.org/) verzije 3.12 ili noviji. Preporuka: umjesto toga, instalirajte [pyenv](https://github.com/pyenv/pyenv) kako biste mogli koristiti više Python verzija na istom računalu. Kroz pyenv možete instalirati Python 3.12.
 
