@@ -72,7 +72,7 @@ Kratak pregled TypeScript sintakse:
 * **Osnovni tipovi:**
     `let tekst: string = "Bok"; let broj: number = 42; let aktivan: boolean = true;`
 * **Funkcije i lambda funkcije:**
-    `function zbroj(a: number, b?: number): number { return a + (b || 0); }`
+    `function zbroj(a: number, b?: number): number { return a + (b ?? 0); }`
     `const ispis = (poruka: string): void => console.log(poruka);`
 * **Liste:**
     `let brojevi: number[] = [1, 2, 3];`
@@ -80,6 +80,8 @@ Kratak pregled TypeScript sintakse:
     `type Korisnik = { ime: string; opcionalanBroj?: number; };`
 * **Objekti (mape)**
     `let rjecnik: Record<string, number> = { "kljuc1": 2 };`
+* **Novouvedeni tip za mape:**
+    `let rjecnik: Map<string, number> = new Map([["kljuc1", 2]]);`
 * **N-torke (*tuples*):**
     `let uredeniPar: [number, string] = [1, "Ivan"];`
 * **Unije tipova:** `let brojIliTekstIliNull: number | string | null = "ABC";`
@@ -169,7 +171,7 @@ Zamijenite `App.vue`:
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 
-interface Task {
+type Task = {
   id: number
   title: string
   done: boolean
@@ -309,7 +311,7 @@ Koristite `v-if` kad se uvjet rijetko mijenja (izbjegava stvaranje nepotrebnih e
 <script setup lang="ts">
 import { ref } from 'vue'
 
-interface Task {
+type Task = {
   id: number
   title: string
   done: boolean
@@ -490,19 +492,18 @@ Izvedena stanja (`computed`) prate promjene reaktivnih vrijednosti i vraćaju no
 <script setup lang="ts">
 import { ref, watch, watchEffect } from 'vue'
 
-const initialValue = JSON.parse(localStorage.getItem('value') ?? "null")
-const value = ref(initialValue ?? 'Sinkronizirano s Local Storageom')
+const value = ref(localStorage.getItem('value') ?? 'Sinkronizirano s Local Storageom')
 
 // watch: prati jednu ili više specifičnih reaktivnih vrijednosti
 watch(value, (newValue) => {
-  localStorage.setItem('value', JSON.stringify(newValue))
-}, { deep: true })
+  localStorage.setItem('value', newValue)
+})
 
 
 // watchEffect: automatski prati sve reaktivne vrijednosti koje se koriste unutar funkcije
 watchEffect(() => {
   // Isti efekt kao ranije, ali ne moramo sami pratiti koje su ovisnosti
-  // localStorage.setItem('value', JSON.stringify(value.value))
+  // localStorage.setItem('value', value.value)
 })
 </script>
 
