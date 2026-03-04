@@ -15,7 +15,7 @@ nvm use 25
 Provjerite instalaciju:
 
 ```bash
-node --version   # trebao bi ispisati v24.x.x
+node --version   # trebao bi ispisati v25.x.x
 npm --version    # npm dolazi s Node.js instalacijom
 ```
 
