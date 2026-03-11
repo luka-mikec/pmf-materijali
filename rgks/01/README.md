@@ -369,6 +369,8 @@ Sintaksa `(element, elementIndex) in elements` u svakoj iteraciji vraća i trenu
 Ako u ovom primjeru unesete redom vrijednosti `x`, `y`, `z` u input polja, a zatim obrišete srednji element, na prvu biste očekivali da ostanu `x` i `z`.
 Zbog korištenja indeksa kao ključa, Vue će 'pogrešno' prenijeti stanje iz obrisanog elementa (b) u preostali element (c), pa će ostati `x` i `y`.
 
+Za iteraciju po pozitivnim prirodnim brojevima 1, 2, 3, ... možete koristiti sintaksu `v-for="i in n"`.
+
 ## Događaji
 
 Direktiva `v-on` (skraćeno `@`) definira koju funkciju ('event handler') pozvati kad se dogodi neki događaj ('event'). Npr. što napraviti kad korisnik klikne na gumb, ili kad pokuša poslati formu (`submit` event, obično se aktivira kad korisnik pritisne Enter unutar polja u formi).
