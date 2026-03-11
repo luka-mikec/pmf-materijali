@@ -70,25 +70,25 @@ Uobičajenu kompilaciju projekta radimo s `npm run build`, što je kratica za `n
 
 Kratak pregled TypeScript sintakse:
 * **Osnovni tipovi:**
-    `let tekst: string = "Bok"; let broj: number = 42; let aktivan: boolean = true;`
+    `let text: string = "Hello"; let num: number = 42; let active: boolean = true;`
 * **Funkcije i lambda funkcije:**
-    `function zbroj(a: number, b?: number): number { return a + (b ?? 0); }`
-    `const ispis = (poruka: string): void => console.log(poruka);`
+    `function sum(a: number, b?: number): number { return a + (b ?? 0); }`
+    `const print = (message: string): void => console.log(message);`
 * **Liste:**
-    `let brojevi: number[] = [1, 2, 3];`
+    `let numbers: number[] = [1, 2, 3];`
 * **Objekti (s poznatom shemom):**
-    `type Korisnik = { ime: string; opcionalanBroj?: number; };`
+    `type User = { name: string; optionalNum?: number; };`
 * **Objekti (mape)**
-    `let rjecnik: Record<string, number> = { "kljuc1": 2 };`
+    `let obj: Record<string, number> = { "key1": 2 };`
 * **Novouvedeni tip za mape:**
-    `let rjecnik: Map<string, number> = new Map([["kljuc1", 2]]);`
+    `let dictionary: Map<string, number> = new Map([["key1", 2]]);`
 * **N-torke (*tuples*):**
-    `let uredeniPar: [number, string] = [1, "Ivan"];`
-* **Unije tipova:** `let brojIliTekstIliNull: number | string | null = "ABC";`
+    `let orderedPair: [number, string] = [1, "Ivan"];`
+* **Unije tipova:** `let numberOrTextOrNull: number | string | null = "ABC";`
 * **Literali:** `let status: "success" | "error";`
-* **Any:** `let nesto: any = nekaFunkcijaSKompliciranimIzlazom();`
-* **Cast:** `let brojIliTekstIliNull: number | string | null = Math.random() < 0.5 ? "tekst" : 123;
-let duljina = (brojIliTekstIliNull as string).length;`
+* **Any:** `let something: any = functionWithComplexOutput();`
+* **Cast:** `let numberOrTextOrNull: number | string | null = Math.random() < 0.5 ? "text" : 123;
+let length = (numberOrTextOrNull as string).length;`
 
 ### Struktura projekta
 
@@ -118,13 +118,13 @@ Zamijenite sadržaj `src/App.vue` sljedećim kodom:
 // već način na koji referiramo na statičke resurse poput slika. 
 // Evaluirati će se u string s relativnom putanjom do slike.
 import vueLogo from './assets/vue.svg' 
-const appName = 'To-do lista'
-const rawHtml = '<em>Vue.js</em> aplikacija'
+const appName = 'To-do List'
+const rawHtml = '<em>Vue.js</em> app'
 </script>
 
 <template>
   <h1>{{ appName }}</h1>
-  <p>Ovo je <span v-html="rawHtml"></span>.</p>
+  <p>This is a <span v-html="rawHtml"></span>.</p>
   <img v-bind:src="vueLogo" width="50" />
   <img :src="vueLogo" width="50" />
 </template>
@@ -152,7 +152,7 @@ function increment() {
 </script>
 
 <template>
-  <p>Brojač: {{ count }}</p>
+  <p>Counter: {{ count }}</p>
   <button @click="increment">+1</button>
 </template>
 ```
@@ -178,9 +178,9 @@ type Task = {
 }
 
 const tasks = ref<Task[]>([
-  { id: 1, title: 'Naučiti Vue', done: true },
-  { id: 2, title: 'Izraditi Vue projekt', done: false },
-  { id: 3, title: 'Kompilirati Vue projekt', done: false },
+  { id: 1, title: 'Learn Vue', done: true },
+  { id: 2, title: 'Create Vue project', done: false },
+  { id: 3, title: 'Build Vue project', done: false },
 ])
 
 const totalTasks = computed(() => tasks.value.length)
@@ -189,8 +189,8 @@ const pendingTasks = computed(() => totalTasks.value - doneTasks.value)
 </script>
 
 <template>
-  <h1>To-do lista</h1>
-  <p>Ukupno: {{ totalTasks }} | Završeno: {{ doneTasks }} | Preostalo: {{ pendingTasks }}</p>
+  <h1>To-do List</h1>
+  <p>Total: {{ totalTasks }} | Done: {{ doneTasks }} | Remaining: {{ pendingTasks }}</p>
 </template>
 ```
 
@@ -207,7 +207,7 @@ const b = ref(2)
 const useA = ref(true)
 
 const result = computed(() => {
-  console.log('computed se izvršava')
+  console.log('computed')
   return useA.value ? a.value : b.value
 })
 </script>
@@ -238,22 +238,22 @@ const fontSize = ref(16)
 <template>
   <!-- Objekt-sintaksa za CSS klase: klasa se dodaje ako je uvjet ispunjen -->
   <div :class="{ active: isActive, 'text-error': hasError }">
-    Primjer teksta (ovisi o active, error)
+    Sample text (depends on active, error)
   </div>
 
   <!-- Lista-sintaksa za CSS klase: uvijek prisutne klase i dodane dinamičke -->
   <div :class="['underline', { active: isActive }]">
-    Primjer s poljem (ovisi o underline, active)
+    Sample with array (depends on underline, active)
   </div>
 
   <!-- CSS stil -->
   <p :style="{ fontSize: fontSize + 'px', color: hasError ? 'red' : 'black' }">
-    Dinamički stil (ovisi o font size, error)
+    Dynamic style (depends on font size, error)
   </p>
 
   <!-- CSS stil kao običan string -->
   <p :style="'font-size: ' + fontSize + 'px; color: ' + (hasError ? 'red' : 'black')">
-    Dinamički stil kao string (ovisi o font size, error)
+    Dynamic style as string (depends on font size, error)
   </p>
 
   <button @click="isActive = !isActive">Toggle Active</button>
@@ -285,18 +285,18 @@ const showDetails = ref(false)
 </script>
 
 <template>
-  <div v-if="status === 'loading'">Učitavanje...</div>
-  <div v-else-if="status === 'empty'">Nema zadataka.</div>
-  <div v-else>Zadaci su učitani.</div>
+  <div v-if="status === 'loading'">Loading...</div>
+  <div v-else-if="status === 'empty'">No tasks</div>
+  <div v-else>Tasks loaded</div>
 
   <!-- v-show: element je uvijek u DOM-u, samo mu se mijenja vidljivost -->
-  <p v-show="showDetails">Ovo su detalji koji se mogu sakriti.</p>
+  <p v-show="showDetails">These are details that can be hidden</p>
 
-  <button @click="status = 'loading'">Postavi na Loading</button>
-  <button @click="status = 'empty'">Postavi na Empty</button>
-  <button @click="status = 'ready'">Postavi na Ready</button>
+  <button @click="status = 'loading'">Set to Loading</button>
+  <button @click="status = 'empty'">Set to Empty</button>
+  <button @click="status = 'ready'">Set to Ready</button>
   <button @click="showDetails = !showDetails">
-    {{ showDetails ? 'Sakrij' : 'Prikaži' }} detalje
+    {{ showDetails ? 'Hide' : 'Show' }} details
   </button>
 </template>
 ```
@@ -318,9 +318,9 @@ type Task = {
 }
 
 const tasks = ref<Task[]>([
-  { id: 1, title: 'Naučiti Vue', done: true },
-  { id: 2, title: 'Izraditi Vue projekt', done: false },
-  { id: 3, title: 'Položiti ispit', done: false },
+  { id: 1, title: 'Learn Vue', done: true },
+  { id: 2, title: 'Create Vue project', done: false },
+  { id: 3, title: 'Pass the exam', done: false },
 ])
 
 function removeTask(id: number) {
@@ -329,18 +329,18 @@ function removeTask(id: number) {
 </script>
 
 <template>
-  <h1>To-do lista</h1>
+  <h1>To-do List</h1>
   <ul>
     <li v-for="task in tasks" :key="task.id">
       {{ task.title }}
-      <button @click="removeTask(task.id)">Obriši</button>
+      <button @click="removeTask(task.id)">Delete</button>
     </li>
   </ul>
-  <p v-if="tasks.length === 0">Nema zadataka.</p>
+  <p v-if="tasks.length === 0">No tasks</p>
 </template>
 ```
 
-Atribut `:key` je obavezan i treba ga postaviti na vrijednost koja je jedinstvena (unutar liste). Vue ga koristi za praćenje identiteta elemenata prilikom mijenjanja liste. Npr. kad se u listi od tri elemenata obriše drugi element, Vue će znati da novu listu čine (bivši) prvi i treći element, a ne da je drugi element zamijenjen s trećim. U našem primjeru to nije problem, ali da ovi elementi imaju neko stanje (npr. `input` element) i da nismo odabrali dobar `key` (npr. da smo koristili indeks unutar polja), to bi se stanje pogrešno prenijelo iz obrisanog elementa u bivši treći element:
+Atribut `:key` je obavezan i treba ga postaviti na vrijednost koja je jedinstvena. Nijedan drugi element, bilo trenutno prisutan ili budući, ne smije imati istu vrijednost ključa. Vue koristi ključ za praćenje identiteta elemenata prilikom mijenjanja liste. Npr. kad se u listi od tri elemenata obriše drugi element, Vue će znati da novu listu čine (bivši) prvi i treći element, a ne da je drugi element zamijenjen s trećim, a treći element obrisan. U našem primjeru to nije problem, ali da elementi u listi imaju neko stanje (npr. `input` element) i da nismo odabrali dobar `key` (npr. da smo koristili indeks unutar polja), to bi se stanje pogrešno prenijelo iz obrisanog elementa u bivši treći element:
 ```vue
 <script setup lang="ts">
 import { ref } from 'vue'
@@ -353,20 +353,21 @@ function removeElement(index: number) {
 </script>
 
 <template>
-  <h1>To-do lista</h1>
+  <h1>To-do List</h1>
   <ul>
     <li v-for="(element, elementIndex) in elements" :key="elementIndex">
       {{ element }}
       <input />
-      <button @click="removeElement(elementIndex)">Obriši</button>
+      <button @click="removeElement(elementIndex)">Delete</button>
     </li>
   </ul>
-  <p v-if="elements.length === 0">Nema zadataka.</p>
+  <p v-if="elements.length === 0">No tasks</p>
 </template>
 ```
 
 Sintaksa `(element, elementIndex) in elements` u svakoj iteraciji vraća i trenutni element i njegov indeks. 
-Ako u ovom primjeru unesete redom vrijednosti `x`, `y`, `z` u input polja, a zatim obrišete srednji element, očekivali biste da ostanu `x` i `z`, ali zbog korištenja indeksa kao ključa, Vue će pogrešno prenijeti stanje iz obrisanog elementa u preostali element, pa će ostati `x` i `y`.
+Ako u ovom primjeru unesete redom vrijednosti `x`, `y`, `z` u input polja, a zatim obrišete srednji element, na prvu biste očekivali da ostanu `x` i `z`.
+Zbog korištenja indeksa kao ključa, Vue će 'pogrešno' prenijeti stanje iz obrisanog elementa (b) u preostali element (c), pa će ostati `x` i `y`.
 
 ## Događaji
 
@@ -380,43 +381,46 @@ const count = ref(0)
 
 function handleClick(event: MouseEvent) {
   ++count.value
-  alert(`Kliknuto na koordinatama: ${event.clientX}, ${event.clientY}`);
+  alert(`Clicked at coordinates: ${event.clientX}, ${event.clientY}`);
 }
 
 const handleSubmit = () => {
-  alert('Forma poslana');
+  alert('Form submitted');
 };
 
 </script>
 
 <template>
   <!-- Inline funkcija -->
-  <button @click="count++">+1 (inline funkcija)</button>
+  <button @click="++count">+1 (inline function)</button>
 
   <!-- Funkcija definirana izvan templatea -->
-  <button @click="handleClick">+1 (obična funkcija)</button>
+  <button @click="handleClick">+1 (regular function)</button>
 
   <!-- Modifikatori događaja: .prevent zaustavlja zadano ponašanje za neke događaje,
        npr. preglednikovu redirekciju nakon submitanja forme -->
   <form @submit.prevent="handleSubmit">
-    <button type="submit">Pošalji</button>
+    <button type="submit">Submit</button>
   </form>
 
   <!-- .once onemogućuje višestruku aktivaciju istog događaja -->
-  <button @click.stop.once="count++">Samo jednom</button>
+  <button @click.once="++count">Only once</button>
 
-  <!-- Tipke -->
+  <!-- Modifikatori za tipke -->
   <input @keyup.enter="console.log('Enter pritisnut')" />
 
-  <p>Brojač: {{ count }}</p>
+  <p>Counter: {{ count }}</p>
 </template>
 ```
 
-Modifikatori su sufiksi koji modificiraju ponašanje direktive. Npr., `.prevent` poziva `event.preventDefault()`, `.stop` poziva `event.stopPropagation()`.
+Modifikatori su sufiksi koji modificiraju ponašanje direktive. Npr., `.prevent` poziva `event.preventDefault()`, dok `.stop` poziva `event.stopPropagation()`.
 
 ## Direktiva `v-model`
 
-`v-model` stvara dvosmjerno vezanje (*two-way binding*) između stanja i komponente: ne samo da komponenti šaljemo neko stanje, već komponenta može mijenjati to stanje. Neke komponente ne podržavaju `v-model`. Više o `v-model` direktivi vidjet ćemo nešto kasnije, zasad nas zanima samo kako izgleda korištenje komponente koja podržava `v-model`.
+`v-model` stvara dvosmjerno vezanje (*two-way binding*) između stanja i komponente: ne samo da komponenti šaljemo neko stanje, već komponenta može mijenjati to stanje.
+Zapravo, radi se o prividnom dvosmjernom vezanju: komponenta nikad ne može sama mijenjati vanjsko stanje.
+Neke komponente ne podržavaju `v-model`. 
+Više o `v-model` direktivi i tome kako stvara privid dvosmjernog vezanja vidjet ćemo nešto kasnije, zasad nas zanima samo kako izgleda korištenje komponente koja podržava `v-model`.
 
 ```vue
 <script setup lang="ts">
@@ -424,26 +428,28 @@ import { ref } from 'vue'
 
 const newTaskTitle = ref('')
 const priority = ref('medium')
-const isUrgent = ref(false)
+const isImportant = ref(false)
 const notes = ref('')
+const num = ref(0)
 
 const tasks = ref<{ id: number; title: string }[]>([])
 let nextId = 1
 
 function addTask() {
+  // .trim() nije nužan u ovoj funkciji jer koristimo v-model.trim
   if (!newTaskTitle.value.trim()) return
-  tasks.value.push({ id: nextId++, title: newTaskTitle.value.trim() })
+  tasks.value.push({ id: ++nextId, title: newTaskTitle.value.trim() })
   newTaskTitle.value = ''
 }
 </script>
 
 <template>
-  <h1>To-do lista</h1>
+  <h1>To-do List</h1>
 
   <form @submit.prevent="addTask">
     <!-- .trim automatski uklanja razmake s početka i kraja -->
-    <input v-model.trim="newTaskTitle" placeholder="Novi zadatak..." />
-    <button type="submit">Dodaj</button>
+    <input v-model.trim="newTaskTitle" placeholder="New task..." />
+    <button type="submit">Add</button>
   </form>
 
   <ul>
@@ -452,14 +458,14 @@ function addTask() {
 
   <hr />
 
-  Primjeri različitih inputa i njihove dvosmjerne veze:
+  Examples of different inputs and their two-way bindings:
 
   <hr />
 
   <select v-model="priority">
-    <option value="low">Niski</option>
-    <option value="medium">Srednji</option>
-    <option value="high">Visoki</option>
+    <option value="low">Low</option>
+    <option value="medium">Medium</option>
+    <option value="high">High</option>
   </select>
 
   v-model: {{ priority }}
@@ -467,17 +473,24 @@ function addTask() {
   <hr />
 
   <label>
-    <input type="checkbox" v-model="isUrgent" /> Hitno
+    <input type="checkbox" v-model="isImportant" /> Important
   </label>
 
-  v-model: {{ isUrgent }}
+  v-model: {{ isImportant }}
 
   <hr />
 
   <!-- Textarea s .lazy: sinkronizira tek na 'change' (blur), ne na svaku promjenu (zbog performansi) -->
-  <textarea v-model.lazy="notes" placeholder="Bilješke..."></textarea>
+  <textarea v-model.lazy="notes" placeholder="Notes..."></textarea>
 
   v-model: <pre>{{ notes }}</pre>
+
+  <hr />
+
+  <!-- Input s .number: pretvara unos u broj, npr. unos "123" postaje broj 123 -->
+  <input v-model.number="num" ></input>
+
+  v-model * 2: {{ num * 2 }}
 
 </template>
 ```
@@ -492,13 +505,12 @@ Izvedena stanja (`computed`) prate promjene reaktivnih vrijednosti i vraćaju no
 <script setup lang="ts">
 import { ref, watch, watchEffect } from 'vue'
 
-const value = ref(localStorage.getItem('value') ?? 'Sinkronizirano s Local Storageom')
+const value = ref(localStorage.getItem('value') ?? 'Synchronised with Local Storage')
 
 // watch: prati jednu ili više specifičnih reaktivnih vrijednosti
 watch(value, (newValue) => {
   localStorage.setItem('value', newValue)
 })
-
 
 // watchEffect: automatski prati sve reaktivne vrijednosti koje se koriste unutar funkcije
 watchEffect(() => {
@@ -518,17 +530,17 @@ watchEffect(() => {
 </template>
 ```
 
-`watch()` prima reaktivno stanje (npr. `ref`) i *callback* funkciju koja se poziva kad se vrijednost promijeni. Opcija `deep: true` omogućuje praćenje promjena na svim razinama unutar objekata (npr. na objektu `{"a": {"b": "x"}}` praćenje promjene `a.b`) ili polja (promjene svojstava unutar polja). Osim `deep: true`, često je korisna i opcija `immediate: true`. Njeno uključivanje znači da se funkcija poziva pri budućim promjenama, ali i na početku (tijekom inicijalizacije komponente).
+`watch()` prima reaktivno stanje (npr. `ref`) i *callback* funkciju koja se poziva kad se vrijednost promijeni. Opcija `deep: true` omogućuje praćenje promjena na svim razinama unutar objekata (npr. na objektu `{"a": {"b": "x"}}` praćenje promjene `a.b`) ili polja (promjene svojstava elemenata unutar polja). Osim `deep: true`, često je korisna i opcija `immediate: true`. Njeno uključivanje znači da se funkcija poziva pri budućim promjenama, ali i na početku (tijekom inicijalizacije komponente).
 
-`watchEffect()` automatski prati sve reaktivne vrijednosti korištene unutar funkcije. Ne prima eksplicitni izvor, već Vue sam detektira ovisnosti pri prvom pokretanju. Smisao eksplicitnih vrijednosti kod `watch` funkcije su situacije u kojima želimo čitati npr. reaktivne vrijednosti `a` i `b`, ali samo promjene vrijednosti `a` trebaju pokrenuti funkciju, dok promjene vrijednosti `b` ne trebaju. U tom slučaju koristimo `watch(a, callback)` umjesto `watchEffect()`, jer bi `watchEffect()` pokrenuo funkciju i kad se dogodi promjena u `b`.
+`watchEffect()` automatski prati sve reaktivne vrijednosti korištene unutar funkcije. Ne prima eksplicitni izvor, već Vue sam detektira ovisnosti pri prvom pokretanju. Smisao eksplicitnih vrijednosti kod `watch` funkcije su situacije u kojima želimo čitati npr. reaktivne vrijednosti `a` i `b`, ali samo promjene vrijednosti `a` trebaju pokrenuti *callback* funkciju, dok promjene vrijednosti `b` ne trebaju. U tom slučaju koristimo `watch(a, callback)` umjesto `watchEffect()`, jer bi `watchEffect()` pokrenuo funkciju i kad se dogodi promjena u `b`.
 
-**Napomena**: najčešće je bolje pisati kod koji ne ovisi o `watch` funkciji. Problem s `watch` konstrukcijama jest što njihovi pozivi nisu eksplicitno prisutni u kodu, pa je debuggiranje znatno teže. Stoga ako želimo uvijek izvršiti neku radnju `f()` kad se promijeni stanje `st`, obično je bolje za mijenjanje stanja `st` napraviti funkciju poput `function setSt(newValue) { st.value = newValue; f(); }` i koristiti `setSt()` umjesto direktnog mijenjanja `st.value`. Sada smo postigli isti efekt, ali kod je lakše debuggirati.
+**Napomena**: obično je bolje pisati kod koji ne ovisi o `watch` funkciji. Problem s `watch` konstrukcijama jest što njihovi pozivi nisu eksplicitno prisutni u kodu, pa je debuggiranje znatno teže. Stoga ako želimo uvijek izvršiti neku radnju `f()` kad se promijeni stanje `st`, obično je bolje za mijenjanje stanja `st` napraviti funkciju poput `function setSt(newValue) { st.value = newValue; f(); }` i koristiti `setSt()` umjesto direktnog mijenjanja `st.value`. Sada smo postigli isti efekt, ali kod je lakše debuggirati.
 
 ## Referenca na elemente
 
 Osim što se reference mogu koristiti za uobičajene JavaScript vrijednosti, mogu se koristiti i za HTML elemente koji su dio našeg sučelja. Kako Vue sam stvara i upravlja DOM elementima, postupak za inicijalizaciju ovakvih referenci izgleda ovako:
 1. Definiramo referencu u `<script setup>` bloku, npr. `const node = ref<HTMLEment | null>(null)`. Tip će uvijek biti oblika `html-element | null`, jer Vue ne crta sučelje prije nego izvrši čitav `<script setup>` blok, pa je `null` jedina moguća početna vrijednost.
-2. Vue iscrtava sučelje. Negdje u predlošku trebamo koristiti atribut `ref="node"` na elementu čiju referencu želimo. Ova posebna sintaksa znači da Vue treba postaviti `node.value` na taj element nakon što ga stvori.
+2. Vue iscrtava sučelje. Negdje u predlošku trebamo koristiti atribut `ref="node"` na HTML elementu čiju referencu želimo. Ova posebna sintaksa znači da Vue treba postaviti `node.value` na taj element nakon što ga stvori.
 3. Vrijednost `node.value` definirana je jednom kad je cijelo sučelje iscrtano.
 
 ```vue
@@ -550,7 +562,7 @@ async function startEditing(task: { id: number; title: string }) {
 
   // Input se tek sada pojavljuje u DOM-u, moramo pričekati iscrtavanje
   await nextTick()
-  // Pozivamo .focus() kako korisnik ne bi morao kliknuti na polje prije pisanja
+  // Pozivamo .focus() kako korisnik ne bi morao kliknuti na <input> element prije pisanja
   editInput.value?.focus()
 }
 
@@ -564,7 +576,7 @@ function finishEditing() {
 </script>
 
 <template>
-  Kliknite na stavku da biste započeli uređivanje:
+  Click an item to start editing:
 
   <ul>
     <li v-for="task in tasks" :key="task.id">
@@ -578,13 +590,579 @@ function finishEditing() {
         v-model="editText"
         @keyup.enter="finishEditing"
     />
-    <button @click="finishEditing">Spremi</button>
+    <button @click="finishEditing">Save</button>
   </div>
 </template>
 ```
 
-U gornjem primjeru koristimo `ref` kako bismo pozvali metodu `.focus()` na `input` elementu (to je DOM metoda, nije specifična za Vue). U ovom primjeru vidim i primjer korištenja `nextTick()`, koji vraća `Promise` koji se izvršava nakon što Vue završi s iscrtavanjem DOM-a. To znači da će se kod nakon `await nextTick()` izvršiti tek nakon što se `input` element pojavi u DOM-u, pa će `editInput.value` biti definiran i moći ćemo pozvati `.focus()`. Sintaksa `a?.b()` znači "ako je `a.b` definirana vrijednost, pozovi metodu `a.b()`, a inače ne radi ništa". U našem slučaju znamo da je `editInput.value?.focus` definirano, ali TypeScript ne zna da će `editInput.value` biti definiran nakon `nextTick()`, pa koristimo ovu sintaksu da izbjegnemo TypeScript grešku.
+U gornjem primjeru koristimo `ref` kako bismo pozvali metodu `.focus()` na `input` elementu (to je DOM metoda, nije specifična za Vue). U ovom primjeru vidimo i primjer korištenja `nextTick()`, funkcije koja vraća `Promise` koji se izvršava (`resolve`) nakon što Vue završi s iscrtavanjem DOM-a. To znači da će se kod nakon `await nextTick()` izvršiti tek nakon što se `input` element pojavi u DOM-u, pa će `editInput.value` biti definiran i moći ćemo pozvati `.focus()`. Sintaksa `a?.b()` znači "ako je `a.b` definirana vrijednost, pozovi metodu `a.b()`, a inače ne radi ništa". U našem slučaju znamo da je `editInput.value?.focus` definirano, ali TypeScript ne zna da će `editInput.value` biti definiran nakon `await nextTick()`, pa koristimo ovu sintaksu da izbjegnemo TypeScript grešku.
 
 ## Zadatak 1
-Koristeći `table`, `tr` i `td` elemente, iscrtajte tablicu množenja. Broj redaka i stupaca neka se unosi putem `input` elemenata (na početku neka su oba broja 10), a pritiskom `enter` tablica se treba iscrtati koristeći trenutno uneseni broj redaka i stupaca. Uneseni brojevi trebaju ostati zapisani i nakon refresha stranice. Neka se ispod tablice prikazuje tekst oblika "Broj prostih brojeva manjih od {{ redaka * stupaca }} jest {{ brojProstihBrojeva }}" gdje je `brojProstihBrojeva` izvedeno stanje (`computed`). Konačno, neka cijela tablica koristi dinamički CSS stil: ovisno o broju redaka i stupaca postavlja zoom na način da je tablica uvijek cijela vidljiva na vašem ekranu (čak i ako zbog toga postane nečitljiva). Ako je broj redaka ili stupaca veći od 100, neka se umjesto tablice prikaže poruka "Previše redaka/stupaca".
+Koristeći `table`, `tr` i `td` elemente, iscrtajte tablicu množenja. Broj redaka i stupaca neka se unosi putem `input` elemenata (na početku neka su oba broja 10), a pritiskom `enter` tablica se treba iscrtati koristeći trenutno uneseni broj redaka i stupaca. Uneseni brojevi trebaju ostati zapisani i nakon refresha stranice. Neka se ispod tablice prikazuje tekst oblika "Broj prostih brojeva manjih od {{ redaka * stupaca }} jest {{ brojProstihBrojeva }}" gdje je `brojProstihBrojeva` izvedeno stanje (`computed`). Konačno, neka cijela tablica koristi dinamički CSS stil: ovisno o broju redaka i stupaca postavlja `zoom` na način da je tablica uvijek cijela vidljiva na vašem ekranu (čak i ako zbog toga postane nečitljiva). Ako je broj redaka ili stupaca veći od 100, neka se umjesto tablice prikaže poruka "Previše redaka/stupaca".
+Provjerite da izvorni kod nema TypeScript grešaka pokretanjem `npx vue-tsc -b`.
+
+
+## Komponente
+
+Do sad smo sav Vue kod pisali u jednoj datoteci, `App.vue`. Komponente omogućuju razdvajanje korisničkog sučelja na manje dijelove.
+
+Stvorite datoteku `src/TaskItem.vue`:
+
+```vue
+<!-- TaskItem.vue -->
+<script setup lang="ts">
+const props = defineProps<{
+  title: string
+  done: boolean
+}>()
+</script>
+
+<template>
+  <li :class="{ done }">
+    {{ title }}
+  </li>
+</template>
+
+<style scoped>
+.done {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+</style>
+```
+
+Svaka `.vue` datoteka je Single-File Component (SFC) s tri opcionalne sekcije: `<script>` (logika), `<template>` (predložak) i `<style>` (stilovi).
+Atribut `scoped` u `<style>` osigurava da se CSS pravila primjenjuju samo na tu komponentu.
+
+Uključite upravo izrađenu komponentu (SFC) u `App.vue`:
+
+```vue
+<!-- App.vue -->
+<script setup lang="ts">
+import { ref } from 'vue'
+import TaskItem from './TaskItem.vue'
+
+type Task = {
+  id: number
+  title: string
+  done: boolean
+}
+
+const tasks = ref<Task[]>([
+  { id: 1, title: 'Learn Vue', done: true },
+  { id: 2, title: 'Create Vue project', done: false },
+])
+</script>
+
+<template>
+  <h1>To-do List</h1>
+  <ul>
+    <TaskItem
+      v-for="task in tasks"
+      :key="task.id"
+      :title="task.title"
+      :done="task.done"
+    />
+  </ul>
+</template>
+```
+
+## Životni ciklus komponente
+
+Vue komponente prolaze kroz životni ciklus: stvaranje, postavljanje u DOM, ažuriranje i uklanjanje. 
+Sve što želimo izvršiti prilikom stvaranja komponente (prva faza) stavljamo izravno u `<script setup>` blok.
+Za preostale faze koristimo tzv. *lifecycle hooks*, ako želimo dodati vlastitu logiku za neku od tih faza.
+
+```vue
+<script setup lang="ts">
+import { ref, onMounted, onUpdated, onUnmounted } from 'vue'
+
+const count = ref(0)
+
+console.log('Component is being created')
+
+onMounted(() => {
+  console.log('Component mounted to DOM')
+})
+
+onUpdated(() => {
+  console.log('DOM updated, count is', count.value)
+})
+
+onUnmounted(() => {
+  console.log('Component removed from DOM')
+})
+</script>
+
+<template>
+  <button @click="++count">{{ count }}</button>
+</template>
+```
+
+Objašnjenje:
+- `<script setup>`: sav kod unutar ovog bloka izvršava se tijekom stvaranja komponente. Većina inicijalizacije ide ovdje, uključno s pozivanjem backenda.
+- `onMounted`: komponenta je postavljena u DOM. Inicijalizacija koja zahtijeva DOM elemente ide ovdje.
+- `onUpdated`: poziva se nakon svake promjene koja uzrokuje ponovno iscrtavanje (dijela) DOM-a.
+- `onUnmounted`: pogodan trenutak za čišćenje, npr. uklanjanje intervala, pretplata na događaje itd.
+
+```vue
+<script setup lang="ts">
+import { ref, onUpdated } from 'vue'
+
+const visible = ref(0)
+const hidden = ref(0)
+
+onUpdated(() => {
+  // Poziva se samo kad se 'visible' promijeni, jer se samo on koristi u predlošku.
+  console.log('DOM updated')
+})
+</script>
+
+<template>
+  <p>{{ visible }}</p>
+  <button @click="++visible">change visible (triggers onUpdated)</button>
+  <button @click="++hidden">change hidden (does not trigger onUpdated)</button>
+</template>
+```
+
+
+## Svojstva (*props*)
+
+Svojstva (*props*) su mehanizam za prosljeđivanje podataka od roditeljske komponente prema djetetu. 
+Tok podataka *uvijek* je jednosmjeran: roditelj postavlja svojstva djetetu.
+
+Svojstva sa zadanim vrijednostima:
+
+```vue
+<!-- TaskItem.vue -->
+<script setup lang="ts">
+const props = withDefaults(defineProps<{
+  title: string
+  done?: boolean
+  priority?: 'low' | 'medium' | 'high'
+}>(), {
+  done: false,
+  priority: 'low',
+})
+</script>
+
+<template>
+  <li :class="[`priority-${priority}`, { done }]">
+    {{ title }}
+  </li>
+</template>
+
+<style scoped>
+.priority-low { color: green; }
+.priority-medium { color: yellow; }
+.priority-high { color: red; }
+.done {
+  text-decoration: line-through;
+  opacity: 0.4;
+}
+</style>
+```
+
+
+## Događaji
+
+Dijete ne smije izravno pristupati roditelju (mijenjati stanje ili pozivati metode roditelja).
+Događaji su mehanizam za komunikaciju od djeteta prema roditelju.
+Ako dijete želi poslati informaciju roditelju, poziva (*emits*) događaje (*events*).
+
+Roditelj odlučuje hoće li i kako reagirati. Više roditelja može imati isto dijete, i svaki roditelj može drugačije reagirati na iste događaje.
+
+Osnovna prednost: između roditelja i djeteta postoji slaba povezanost (*loose coupling*), što olakšava održavanje koda.
+Programer ne mora razumijeti cijeli kod projekta kako bi razumio komponentu: dovoljno je razumjeti pojedinu komponentu, njezina svojstva i događaje.
+Komponenta je odgovorna za sebe, što uključuje i korištenje njene djece (ne i implementaciju djece), ali ne i za roditelje.
+Kad bi komponenta bila odgovorna za svoju djecu i svoje roditelje, postala bi odgovorna za cijelu aplikaciju.
+
+```vue
+<!-- TaskItem.vue -->
+<script setup lang="ts">
+const props = defineProps<{
+  id: number
+  title: string
+  done: boolean
+}>()
+
+const emit = defineEmits<{
+  toggle: [id: number]
+  delete: [id: number]
+}>()
+</script>
+
+<template>
+  <li :class="{ done }">
+    <input type="checkbox" :checked="done" @change="emit('toggle', id)" />
+    {{ title }}
+    <button @click="emit('delete', id)">Delete</button>
+  </li>
+</template>
+
+<style scoped>
+.priority-low { color: green; }
+.priority-medium { color: yellow; }
+.priority-high { color: red; }
+.done {
+  text-decoration: line-through;
+  opacity: 0.4;
+}
+</style>
+```
+
+Roditelj se pretplaćuje na događaj koristeći `@` (kratak zapis `v-on` direktive):
+
+```vue
+<!-- App.vue -->
+<script setup lang="ts">
+import { ref } from 'vue'
+import TaskItem from './TaskItem.vue'
+
+type Task = {
+  id: number
+  title: string
+  done: boolean
+}
+
+const tasks = ref<Task[]>([
+  { id: 1, title: 'Learn Vue', done: false },
+  { id: 2, title: 'Create Vue project', done: false },
+])
+
+function toggleTask(id: number) {
+  const task = tasks.value.find(t => t.id === id)
+  if (task) task.done = !task.done
+}
+
+function deleteTask(id: number) {
+  tasks.value = tasks.value.filter(t => t.id !== id)
+}
+</script>
+
+<template>
+  <h1>To-do List</h1>
+  <ul>
+    <TaskItem
+      v-for="task in tasks"
+      :key="task.id"
+      :id="task.id"
+      :title="task.title"
+      :done="task.done"
+      @toggle="toggleTask"
+      @delete="deleteTask"
+    />
+  </ul>
+</template>
+```
+
+**Napomena**: `props` je tzv. reaktivan objekt, još jedan izvor reaktivnosti sličan referenci namijenjen isključivo objektima. 
+Za razliku od referenci koje sadrže objekt, reaktivnim objektima možemo mijenjati svojstva, ali ne i sam objekt.
+Za razliku od referenci, njihovim svojstvima ne pristupamo s `.value`, već direktno, npr. `reaktObj.svojstvo` umjesto `reaktObj.value.svojstvo`.
+Zbog jednostavnosti mi nećemo koristiti reaktivne objekte, no za `props` objekt nema alternative.
+Ako želimo napisati `watch` funkciju koja prati svojstvo, kao prvi argument funkcije `watch` moramo proslijediti **funkciju** koja vraća to svojstvo, npr. `watch(() => props.svojstvo, ...)`.
+
+## Svojstva i događaji bez TypeScripta
+
+Funkcije `defineProps<...>()` i `defineEmits<...>()` nisu obične funkcije. 
+Vue kompajler čita tipove koje smo definirali u njihovim pozivima, i na temelju njih generira kod koji će nas tijekom izvršavanja upozoriti (u konzoli) ako npr.
+proslijedimo pogrešan tip svojstva komponenti, ili pozovemo događaj nepostojećeg naziva.
+
+No, što ako ne želimo koristiti TypeScript? Tada i dalje pozivamo funkcije `defineProps()` i `defineEmits()`, ali bez tipova:
+```vue
+<script setup lang="ts">
+const props = defineProps({
+  title: String,
+  done: Boolean,
+})
+
+const emit = defineEmits(['toggle', 'delete'])
+</script>
+```
+U ovom primjeru ne koristimo TypeScript. Ključne riječi `String` i `Boolean` predstavljaju uobičajene JavaScript objekte.
+Moguće su i složenije sintakse kojima možemo definirati zadane (*default*) vrijednosti itd.
+
+## Direktiva `v-model`
+
+`v-model` na komponenti stvara (prividno) dvosmjerno vezanje stanja: umjesto da definiramo svojstvo i obradu događaja zasebno, koristimo jednu direktivu, `v-model`.
+
+Kad napišemo primjerice `<input v-model="text" />`, Vue će to zamijeniti s `<input :value="text" @input="(event: InputEvent) => text.value = event.target.value" />`.
+Točan oblik funkcije koja obrađuje događaj ovisi o komponenti, u ovom primjeru radi se o ugrađenom `<input>` elementu.
+Za ugrađene HTML elemente koristi se svojstvo `value` te ugrađeni događaji `input` i `change`, ovisno o elementu.
+
+Za Vue komponente, koristi se svojstvo `modelValue` i događaj `update:modelValue`.
+U slučaju da želimo koristiti `v-model` direktivu na drugom svojstvu, npr. `title`, onda Vue očekuje da postoji svojstvo `title` i događaj `update:title`.
+U oba slučaja (`modelValue` i druga svojstva) možemo koristiti funkciju `defineModel()` unutar `<script setup>` bloka kako bismo odjednom definirali i svojstvo i događaj.
+
+```vue
+<!-- App.vue -->
+<script setup lang="ts">
+import { ref } from 'vue'
+import TaskItem from './TaskItem.vue'
+
+type Task = {
+  id: number
+  title: string
+  done: boolean
+}
+
+const tasks = ref<Task[]>([
+  { id: 1, title: 'Learn Vue', done: false },
+  { id: 2, title: 'Create Vue project', done: false },
+])
+
+function deleteTask(id: number) {
+  tasks.value = tasks.value.filter(t => t.id !== id)
+}
+</script>
+
+<template>
+  <h1>To-do List</h1>
+  <ul>
+    <TaskItem
+        v-for="task in tasks"
+        :key="task.id"
+        :id="task.id"
+        v-model:title="task.title"
+        v-model:done="task.done"
+        @delete="deleteTask"
+    />
+
+    <input @input="(event: InputEvent) => (console.log(event))" />
+  </ul>
+  <pre style="text-align: left;">{{ JSON.stringify(tasks, null, 2) }}</pre>
+</template>
+```
+```vue
+<!-- TaskItem.vue -->
+<script setup lang="ts">
+const props = defineProps<{
+  id: number
+}>()
+
+const emit = defineEmits<{
+  delete: [id: number]
+}>()
+
+const done = defineModel<boolean>('done')
+const title = defineModel<string>('title')
+</script>
+
+<template>
+  <li :class="{ done }">
+    <input type="checkbox" v-model="done" />
+    <input v-model="title" />
+    <button @click="emit('delete', id)">Delete</button>
+  </li>
+</template>
+
+<style scoped>
+.priority-low { color: green; }
+.priority-medium { color: yellow; }
+.priority-high { color: red; }
+.done {
+  text-decoration: line-through;
+  opacity: 0.4;
+}
+</style>
+```
+
+## Primjer aplikacije: To-do lista
+
+Možemo spojiti sve spomenute koncepte u jednostavnu aplikaciju.
+
+
+```vue
+<!-- App.vue -->
+<script setup lang="ts">
+import { ref, computed, watchEffect } from 'vue'
+import TaskForm from './TaskForm.vue'
+import TaskItem from './TaskItem.vue'
+
+type Task = {
+  id: number
+  title: string
+  done: boolean
+}
+
+// Učitavanje stanja iz localStoragea
+const savedInitialTasks = localStorage.getItem('tasks')
+const savedInitialNextId = localStorage.getItem('nextId')
+let parsedInitialTasks: Task[] = [], parsedInitialNextId = 1
+if (savedInitialTasks) {
+  parsedInitialTasks = JSON.parse(savedInitialTasks)
+}
+if (savedInitialNextId) {
+  parsedInitialNextId = parseInt(savedInitialNextId, 10)
+}
+
+const tasks = ref<Task[]>(parsedInitialTasks)
+const filter = ref<'all' | 'active' | 'done'>('all')
+const nextId = ref<number>(parsedInitialNextId);
+
+const filteredTasks = computed(() => {
+  switch (filter.value) {
+    case 'active': return tasks.value.filter(t => !t.done)
+    case 'done': return tasks.value.filter(t => t.done)
+    default: return tasks.value
+  }
+})
+
+const stats = computed(() => ({
+  total: tasks.value.length,
+  done: tasks.value.filter(t => t.done).length,
+  active: tasks.value.filter(t => !t.done).length,
+}))
+
+function addTask(title: string) {
+  tasks.value.push({ id: ++nextId.value, title, done: false })
+}
+
+function toggleTask(id: number) {
+  const task = tasks.value.find(t => t.id === id)
+  if (task) task.done = !task.done
+}
+
+function deleteTask(id: number) {
+  tasks.value = tasks.value.filter(t => t.id !== id)
+}
+
+// Spremanje stanja u localStorage
+watchEffect(() => {
+  localStorage.setItem('tasks', JSON.stringify(tasks.value))
+  localStorage.setItem('nextId', nextId.value.toString())
+})
+
+</script>
+
+<template>
+  <div class="app">
+    <h1>To-do List</h1>
+
+    <TaskForm @add="addTask" />
+
+    <div class="filters">
+      <button
+          v-for="f in (['all', 'active', 'done'] as const)"
+          :key="f"
+          :class="['btn-filter', { active: filter === f }]"
+          @click="filter = f"
+      >
+        {{ f === 'all' ? 'All' : f === 'active' ? 'Active' : 'Done' }}
+      </button>
+    </div>
+
+    <p class="stats">
+      Total: {{ stats.total }} | Active: {{ stats.active }} | Done: {{ stats.done }}
+    </p>
+
+    <div class="task-list" v-if="filteredTasks.length > 0">
+      <TaskItem
+          v-for="task in filteredTasks"
+          :key="task.id"
+          :id="task.id"
+          :title="task.title"
+          :done="task.done"
+          @toggle="toggleTask"
+          @delete="deleteTask"
+      />
+    </div>
+    <p v-else class="empty">No tasks to display.</p>
+  </div>
+</template>
+
+<style>
+body { font-family: system-ui, sans-serif; background: #f5f5f5; }
+.app { max-width: 500px; margin: 40px auto; padding: 24px 48px 48px 48px; background: white; border-radius: 8px; border: 1px solid #c9c9c9; }
+h1 { margin-bottom: 24px; color: #2c3e50; }
+.filters { display: flex; gap: 8px; margin-bottom: 12px; }
+.btn-filter { background: #eee; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+.btn-filter.active { background: green; color: white; }
+.stats { color: #666; font-size: 14px; margin-bottom: 12px; }
+.empty { color: #999; text-align: center; padding: 24px; }
+</style>
+```
+```vue
+<!-- TaskForm.vue -->
+<script setup lang="ts">
+import { ref } from 'vue'
+
+const emit = defineEmits<{
+  add: [title: string]
+}>()
+
+const inputRef = ref<HTMLInputElement | null>(null)
+const newTitle = ref('')
+
+function submit() {
+  const trimmed = newTitle.value.trim()
+  if (!trimmed) return
+  emit('add', trimmed)
+  newTitle.value = ''
+  inputRef.value?.focus()
+}
+</script>
+
+<template>
+  <form @submit.prevent="submit" class="task-form">
+    <input
+        ref="inputRef"
+        v-model.trim="newTitle"
+        placeholder="New task..."
+        class="task-input"
+    />
+    <button type="submit" class="btn-add">Add</button>
+  </form>
+</template>
+
+<style scoped>
+.task-form { display: flex; gap: 8px; margin-bottom: 16px; }
+.task-input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+.btn-add { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; background: green; color: white; }
+</style>
+```
+```vue
+<!-- TaskItem.vue -->
+<script setup lang="ts">
+const props = defineProps<{
+  id: number
+  title: string
+  done: boolean
+}>()
+
+const emit = defineEmits<{
+  toggle: [id: number]
+  delete: [id: number]
+}>()
+</script>
+
+<template>
+  <div :class="['task-item', { done }]">
+    <label>
+      <input type="checkbox" :checked="done" @change="emit('toggle', id)" /> <span class="task-title">{{ title }}</span>
+    </label>
+    <button class="btn-delete" @click="emit('delete', id)">Delete</button>
+  </div>
+</template>
+
+<style scoped>
+.task-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+}
+.task-item.done .task-title { text-decoration: line-through; opacity: 0.4; }
+.btn-delete { background: none; border: none; color: red; font-size: 18px; cursor: pointer; }
+</style>
+```
+
+## Zadatak 2
+Dodajte mogućnost dodjele prioriteta zadacima (Low, Medium, High), te filtriranje u ovisnosti o prioritetu.
+Zadaci trebaju biti obojani ovisno o prioritetu.
+Kad se pokuša obrisati nezavršeni zadatak visokog prioriteta, neka aplikacija pita korisnika za potvrdu (npr. koristeći `<div>` s `position: fixed; z-index: 10;`).
+Konačno, pokraj `Delete` gumba dodajte `Edit` gumb. 
+Klikom na `Edit`, polje za unos novog zadatka postaje polje za uređivanje postojećeg zadatka, a gumb `Add` postaje `Save`. Uz `Save` gumb dodajte i `Cancel` gumb koji otkazuje uređivanje.
 Provjerite da izvorni kod nema TypeScript grešaka pokretanjem `npx vue-tsc -b`.

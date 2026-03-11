@@ -2,6 +2,14 @@
 
 Ovdje su materijali s nastave iz kolegija Razvoj grafičkih korisničkih sučelja (RGKS).
 
+## Sadržaj kolegija
+
+[Tema 1: Pregled biblioteke Vue](./01/README.md)
+
+Tema 2: Minimalna full-stack aplikacija
+
+...
+
 ## Cloud provideri
 
 Za praćenje kolegija preporučljivo je korištenje cloud providera, primjerice Google (GCP), Amazon (AWS) ili Microsoft (Azure).
