@@ -1164,7 +1164,46 @@ const emit = defineEmits<{
 ## Zadatak 2
 Dodajte mogućnost dodjele prioriteta zadacima (Low, Medium, High), te filtriranje u ovisnosti o prioritetu.
 Zadaci trebaju biti obojani ovisno o prioritetu.
-Kad se pokuša obrisati nezavršeni zadatak visokog prioriteta, neka aplikacija pita korisnika za potvrdu (npr. koristeći `<div>` s `position: fixed; z-index: 10;`).
+Kad se pokuša obrisati nezavršeni zadatak visokog prioriteta, neka aplikacija pita korisnika za potvrdu.
+Za potvrdu stvorite vlastitu komponentu koja se prikazuje kao modalni prozor (npr. `<div>` s `position: fixed; z-index: 10;`).
+Ta komponenta treba primiti svojstvo s tekstom zadatka, te treba imati događaje za potvrdu i odustajanje.
 Konačno, pokraj `Delete` gumba dodajte `Edit` gumb. 
-Klikom na `Edit`, polje za unos novog zadatka postaje polje za uređivanje postojećeg zadatka, a gumb `Add` postaje `Save`. Uz `Save` gumb dodajte i `Cancel` gumb koji otkazuje uređivanje.
+Klikom na `Edit`, polje za unos novog zadatka postaje polje za uređivanje postojećeg zadatka, a gumb `Add` postaje `Save`. Uz `Save` gumb dodajte i `Cancel` gumb kojim se odustaje od uređivanja.
 Provjerite da izvorni kod nema TypeScript grešaka pokretanjem `npx vue-tsc -b`.
+
+## Zadatak 3
+
+Programi napisani u programskom jeziku Logo imaju dostupnu 2D površinu za crtanje. 
+Na početku izvršavanja programa "kornjača" se nalazi u sredini dostupne površine na koordinatama (0, 0) i 'gleda' prema gore. 
+Koristeći Logo naredbe možemo pomicati kornjaču i tako crtati sliku (kornjača ostavlja trag na površini).
+Primjerice, pravokutnik sa stranicama duljine 200 i 400 [možemo nacrtati](https://www.calormen.com/jslogo/) sljedećim naredbama:
+```logo
+FD 200 
+RT 90 
+FD 400 
+RT 90 
+FD 200
+RT 90 
+FD 400 
+```
+Izradite Vue komponentu `LogoCanvas.vue` koja crta sliku na temelju Logo programa.
+Koristite `<canvas>` element za crtanje.
+LogoCanvas treba imati jedan događaj koji se aktivira klikom bilo gdje na površini.
+LogoCanvas kao svojstvo prima program u obliku stringa te fizičke dimenzije (cijeli brojevi izraženi u pikselima).
+Dovoljno je podržati naredbe oblika `FD <int>` (kretanje naprijed za dani iznos), `RT <int>` (okretanje za dani kut udesno) i `LT <int>` (okretanje za dani kut ulijevo).
+Ako primljeni program iz bilo kojeg razloga nije ispravan, nije nužno išta ispisati/iscrtati.
+Fizičke dimenzije odnose se samo na prostor koji slika zauzima na stranici,
+kornjača neka koristi koordinatni sustav u kojem su koordinate (-1000, -1000) donji lijevi kut, a (1000, 1000) gornji desni kut.
+
+Zatim, izradite komponentu `LogoDialog.vue` koja prikazuje dijaloški okvir, te unutar njega koristi `LogoCanvas` komponentu i `<textarea>` element za uređivanje Logo programa.
+Uređivanjem teksta ažurira se iscrtana slika.
+Dijalog treba imati gumbe za spremanje i brisanje programa, i odustajanje od promjena.
+Gumb za brisanje ne prikazuje se kod novih programa.
+Svojstva su program koji treba prikazati (`null` ako je program nov), a događaji spremanje (poziva se tek kad korisnik klikne na gumb za spremanje), brisanje i odustajanje od promjena. 
+
+Izradite i Vue komponentu `LogoList.vue` koja prikazuje niz do sada izrađenih Logo programa u obliku sličica (ponovno LogoCanvas komponenta), horizontalno poredanih jedan do drugoga, s prelaskom u novi red kad ponestane mjesta.
+Klikom na sličicu otvara se LogoDialog komponenta, gdje se može uređivati program.
+Svojstva su lista Logo programa (gdje je pojedini program `{id: number, code: string}`), a događaji mijenjanje i brisanje programa.
+Alternativno, događaj može biti samo selekcija programa, pa će roditelj ove komponente (`App.vue`) biti odgovoran za dijaloški okvir.
+
+U glavnoj komponenti treba se nalaziti `LogoList` komponenta i gumb za stvaranje novog programa.
