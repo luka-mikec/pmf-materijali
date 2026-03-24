@@ -1171,8 +1171,44 @@ Konačno, pokraj `Delete` gumba dodajte `Edit` gumb.
 Klikom na `Edit`, polje za unos novog zadatka postaje polje za uređivanje postojećeg zadatka, a gumb `Add` postaje `Save`. Uz `Save` gumb dodajte i `Cancel` gumb kojim se odustaje od uređivanja.
 Provjerite da izvorni kod nema TypeScript grešaka pokretanjem `npx vue-tsc -b`.
 
-## Zadatak 3
+### Dijagram rješenja
+```mermaid
+classDiagram
+direction TB
 
+class App
+
+class TaskForm {
+    editingTitle: string | undefined
+    editingPriority: Priority | undefined
+    isEditing: boolean | undefined
+    add(title: string, priority: Priority)
+    save(title: string, priority: Priority)
+    cancelEdit()
+}
+
+class TaskItem {
+    id: number
+    title: string
+    done: boolean
+    priority: Priority
+    toggle(id: number)
+    delete(id: number)
+    edit(id: number)
+}
+
+class ConfirmModal {
+    taskTitle: string
+    confirm()
+    cancel()
+}
+
+App --> TaskForm : uses
+App --> TaskItem : uses
+TaskItem --> ConfirmModal : uses
+```
+
+## Zadatak 3
 Programi napisani u programskom jeziku Logo imaju dostupnu 2D površinu za crtanje. 
 Na početku izvršavanja programa "kornjača" se nalazi u sredini dostupne površine na koordinatama (0, 0) i 'gleda' prema gore. 
 Koristeći Logo naredbe možemo pomicati kornjaču i tako crtati sliku (kornjača ostavlja trag na površini).
@@ -1207,3 +1243,38 @@ Svojstva su lista Logo programa (gdje je pojedini program `{id: number, code: st
 Alternativno, događaj može biti samo selekcija programa, pa će roditelj ove komponente (`App.vue`) biti odgovoran za dijaloški okvir.
 
 U glavnoj komponenti treba se nalaziti `LogoList` komponenta i gumb za stvaranje novog programa.
+
+### Dijagram rješenja
+
+```mermaid
+classDiagram
+direction TB
+
+class App
+
+class LogoList {
+    programs: Program[]
+    update(id: number, code: string)
+    delete(id: number)
+}
+
+class LogoDialog {
+    code: string | null
+    save(code: string)
+    delete()
+    cancel()
+}
+
+class LogoCanvas {
+    program: string
+    width: number
+    height: number
+    click()
+}
+
+App --> LogoList : uses
+App --> LogoDialog : uses
+LogoList --> LogoCanvas : uses
+LogoList --> LogoDialog : uses
+LogoDialog --> LogoCanvas : uses
+```
