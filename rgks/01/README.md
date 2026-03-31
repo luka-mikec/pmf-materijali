@@ -1278,3 +1278,372 @@ LogoList --> LogoCanvas : uses
 LogoList --> LogoDialog : uses
 LogoDialog --> LogoCanvas : uses
 ```
+
+## Vuetify
+
+Vuetify je biblioteka Material Design komponenti za Vue. Umjesto ručnog pisanja HTML/CSS za gumbe, kartice, forme i ostale uobičajene elemente korisničkog sučelja, možemo koristiti gotove Vuetify komponente.
+
+### Instalacija
+
+Najjednostavniji način jest koristeći sljedeću naredbu:
+
+```bash
+npm create vuetify@latest
+```
+
+Prilikom instalacije odaberite "Base" preset i potom upišite ime projekta (ujedno ime direktorija u kojem će se stvoriti Vite/Vue projekt), ostale opcije možete ostaviti zadane.
+
+Uočite da je stvorena datoteka `src/plugins/vuetify.ts`:
+
+```ts
+// Composables
+import { createVuetify } from 'vuetify'
+// Styles
+import '@mdi/font/css/materialdesignicons.css'
+
+import 'vuetify/styles'
+
+// https://vuetifyjs.com/en/introduction/why-vuetify/#feature-guides
+export default createVuetify({
+  theme: {
+    defaultTheme: 'system',
+  },
+})
+```
+
+Plugin Vuetify registrira se u `src/plugins/index.ts`:
+
+```ts
+// Types
+import type { App } from 'vue'
+
+// Plugins
+import vuetify from './vuetify'
+
+export function registerPlugins (app: App) {
+  app.use(vuetify)
+}
+```
+
+Funkcija `registerPlugins` registrira se u `src/main.ts`:
+
+```ts
+// Composables
+import { createApp } from 'vue'
+
+// Plugins
+import { registerPlugins } from '@/plugins'
+
+// Components
+import App from './App.vue'
+
+// Styles
+import 'unfonts.css'
+
+const app = createApp(App)
+
+registerPlugins(app)
+
+app.mount('#app')
+```
+
+### Vuetify Layout
+
+Aplikacije često imaju neke uobičajene elemente:
+- aplikacijska traka (*app bar*) na vrhu, može sadržavati npr. ime aplikacije, gumbe za autentikaciju itd.;
+- navigacijski izbornik (*navigation drawer*), koji se obično nalazi sa strane, otvara se klikom na gumb u aplikacijskoj traci, i sadrži linkove na različite dijelove aplikacije;
+- glavni sadržaj (*main*), koji zauzima ostatak prostora.
+
+```vue
+<template>
+  <v-app>
+    <v-app-bar>
+      <v-app-bar-nav-icon variant="text" @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
+      <v-app-bar-title>Application bar</v-app-bar-title>
+    </v-app-bar>
+
+    <v-navigation-drawer
+        temporary
+        v-model="drawer"
+    >
+      <v-list nav>
+        <v-list-item title="Link 1" link></v-list-item>
+        <v-list-item title="Link 2" link></v-list-item>
+      </v-list>
+    </v-navigation-drawer>
+
+    <v-main>
+      <v-container>
+        <v-row>
+          <v-col>
+            <v-btn color="primary">Button</v-btn>
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-main>
+  </v-app>
+</template>
+
+<script lang="ts" setup>
+import { ref } from 'vue';
+const drawer = ref(false);
+</script>
+```
+
+Za druge primjere *layouta* pogledajte [dokumentaciju](https://vuetifyjs.com/en/features/application-layout/#usage.
+
+### Grid sustav
+
+Vuetify koristi *grid* sustav s 12 stupaca. 
+Ideja je da sadržaj dijelimo u retke, a unutar retka zadajemo koliko stupaca neki sadržaj zauzima.
+Često želimo da neki sadržaj zauzima više stupaca na manjim ekranima, pa možemo koristiti tzv. *breakpoint* sintaksu, npr. `cols="12" md="6"` znači da će element zauzimati 6 stupaca (polovicu reda) na srednje velikim ekranima (`md`), a 12 stupaca (cijeli red) na manjim ekranima.
+Najvažnije su komponente `v-container`, `v-row` i `v-col`.
+
+```vue
+<!-- Eksplicitne širine: svojstvo cols definira broj od 12 stupaca -->
+<v-container>
+  <v-row>
+    <v-col cols="12" md="6">Left half (full row on mobile)</v-col>
+    <v-col cols="12" md="6">Right half</v-col>
+  </v-row>
+</v-container>
+
+<!-- Bez eksplicitnih cols: stupci se automatski dijele jednako -->
+<v-row>
+  <v-col>One third</v-col>
+  <v-col>One third</v-col>
+  <v-col>One third</v-col>
+</v-row>
+
+<!-- cols="auto" zauzima samo onoliko mjesta koliko treba sadržaju -->
+<v-row>
+  <v-col cols="auto">Short text</v-col>
+  <v-col>Remaining space</v-col>
+</v-row>
+```
+
+`v-row` podržava `align` svojstvo (vertikalno poravnanje: `start`, `center`, `end`) i `justify` svojstvo (horizontalno: `start`, `center`, `end`, `space-between`, `space-around`):
+
+```vue
+<!-- Centriranje sadržaja -->
+<v-row justify="center" align="center" style="min-height: 200px">
+  <v-col cols="auto">Centered content</v-col>
+</v-row>
+
+<!-- Kontrole forme jedna do druge, poravnate -->
+<v-row align="center">
+  <v-col>
+    <v-text-field label="Search" hide-details />
+  </v-col>
+  <v-col cols="auto" class="ml-2">
+    <v-btn color="primary">Search</v-btn>
+  </v-col>
+</v-row>
+```
+
+### To-do lista s Vuetifyjem
+
+Pogledajmo istu aplikaciju za To-do listu kao ranije, ali ovaj put koristimo Vuetify komponente.
+
+```vue
+<!-- TaskForm.vue -->
+<script setup lang="ts">
+import { ref } from 'vue'
+
+const emit = defineEmits<{
+  add: [title: string]
+}>()
+
+const inputRef = ref<HTMLInputElement | null>(null)
+const newTitle = ref('')
+
+function submit() {
+  const trimmed = newTitle.value.trim()
+  if (!trimmed) return
+  emit('add', trimmed)
+  newTitle.value = ''
+  inputRef.value?.focus()
+}
+</script>
+
+<template>
+  <v-form @submit.prevent="submit">
+    <v-row>
+      <v-col class="d-flex align-center ga-2">
+        <v-text-field
+            ref="inputRef"
+            v-model.trim="newTitle"
+            label="New task"
+            variant="outlined"
+            density="compact"
+            hide-details
+        />
+        <v-btn type="submit" color="primary">Add</v-btn>
+      </v-col>
+    </v-row>
+  </v-form>
+</template>
+```
+
+```vue
+<!-- TaskItem.vue -->
+<script setup lang="ts">
+const props = defineProps<{
+  id: number
+  title: string
+  done: boolean
+}>()
+
+const emit = defineEmits<{
+  toggle: [id: number]
+  delete: [id: number]
+}>()
+</script>
+
+<template>
+  <v-list-item
+      @click="emit('toggle', id)"
+      :active="done"
+  >
+    <template #prepend>
+      <v-list-item-action start>
+        <v-checkbox-btn :model-value="done" />
+      </v-list-item-action>
+    </template>
+
+    <v-list-item-title>
+      {{ title }}
+    </v-list-item-title>
+
+    <template #append>
+      <v-btn icon="mdi-delete" variant="text" size="small" color="error" @click.stop="emit('delete', id)" />
+    </template>
+  </v-list-item>
+</template>
+```
+
+Napomena: `<template #prepend>` i `<template #append>` su tzv. *named slots*, mehanizam kojim roditeljska komponenta (ovdje `v-list-item`) prima sadržaj za specifična mjesta unutar predloška roditelja. Više o ovome reći ćemo kasnije.
+
+```vue
+<!-- App.vue -->
+<script setup lang="ts">
+import { ref, computed, watch, onMounted } from 'vue'
+import TaskForm from './TaskForm.vue'
+import TaskItem from './TaskItem.vue'
+
+type Task = {
+  id: number
+  title: string
+  done: boolean
+}
+
+const tasks = ref<Task[]>([])
+const filter = ref<'all' | 'active' | 'done'>('all')
+let nextId = 1
+
+const filteredTasks = computed(() => {
+  switch (filter.value) {
+    case 'active': return tasks.value.filter(t => !t.done)
+    case 'done': return tasks.value.filter(t => t.done)
+    default: return tasks.value
+  }
+})
+
+const stats = computed(() => ({
+  total: tasks.value.length,
+  done: tasks.value.filter(t => t.done).length,
+  active: tasks.value.filter(t => !t.done).length,
+}))
+
+function addTask(title: string) {
+  tasks.value.push({ id: ++nextId, title, done: false })
+}
+
+function toggleTask(id: number) {
+  const task = tasks.value.find(t => t.id === id)
+  if (task) task.done = !task.done
+}
+
+function deleteTask(id: number) {
+  tasks.value = tasks.value.filter(t => t.id !== id)
+}
+
+watch(tasks, (newTasks) => {
+  localStorage.setItem('tasks', JSON.stringify(newTasks))
+}, { deep: true })
+
+onMounted(() => {
+  const saved = localStorage.getItem('tasks')
+  if (saved) {
+    const parsed: Task[] = JSON.parse(saved)
+    tasks.value = parsed
+    nextId = Math.max(...parsed.map(t => t.id), 0) + 1
+  }
+})
+</script>
+
+<template>
+  <v-app>
+    <v-app-bar color="primary">
+      <v-app-bar-title>To-do List</v-app-bar-title>
+    </v-app-bar>
+
+    <v-main>
+      <v-container>
+        <v-card variant="outlined">
+          <v-card-text>
+            <v-row density="compact">
+              <v-col>
+                <TaskForm @add="addTask" />
+              </v-col>
+            </v-row>
+            <v-row density="compact">
+              <v-col>
+                <v-btn-toggle v-model="filter" mandatory class="mt-4" density="compact">
+                  <v-btn value="all">All ({{ stats.total }})</v-btn>
+                  <v-btn value="active">Active ({{ stats.active }})</v-btn>
+                  <v-btn value="done">Done ({{ stats.done }})</v-btn>
+                </v-btn-toggle>
+              </v-col>
+            </v-row>
+          </v-card-text>
+
+          <v-list v-if="filteredTasks.length > 0" class="pb-3">
+            <v-list-subheader>
+              Total: {{ stats.total }} | Active: {{ stats.active }} | Done: {{ stats.done }}
+            </v-list-subheader>
+            <TaskItem
+                v-for="task in filteredTasks"
+                :key="task.id"
+                :id="task.id"
+                :title="task.title"
+                :done="task.done"
+                @toggle="toggleTask"
+                @delete="deleteTask"
+            />
+          </v-list>
+
+          <v-card-text v-else>
+            <v-alert type="info" variant="text">No tasks to display.</v-alert>
+          </v-card-text>
+        </v-card>
+      </v-container>
+    </v-main>
+  </v-app>
+</template>
+```
+
+## Zadatak 4
+
+Koristeći upravo dani primjer kao početnu točku, dodajte funkcionalnosti iz Zadatka 2 (prioritet, potvrda brisanja, uređivanje zadataka) koristeći Vuetify komponente. U nastavku su neke korisne [Vuetify komponente](https://vuetifyjs.com/en/components/all/). Ne morate koristiti sve navedeno, a možete koristiti i druge koje nisu na popisu.
+- `v-app`, `v-app-bar`, `v-main`, `v-container`, `v-row`, `v-col` (layout)
+- `v-alert`
+- `v-btn`
+- `v-btn-toggle`,
+- `v-card` (za vanjski okvir aplikacije, i sadržaj dijaloškog okvira), `v-card-text`, `v-card-actions` (za dijalog)
+- `v-checkbox-btn`
+- `v-chip` (umjesto da boja teksta ovisi o prioritetu, pokraj teksta zadatka možete prikazati obojani *chip*)
+- `v-dialog`
+- `v-list`, `v-list-item`, `v-list-item-title`, `v-list-item-action`
+- `v-select`
+- `v-text-field`
