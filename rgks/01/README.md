@@ -1647,3 +1647,42 @@ Koristeći upravo dani primjer kao početnu točku, dodajte funkcionalnosti iz Z
 - `v-list`, `v-list-item`, `v-list-item-title`, `v-list-item-action`
 - `v-select`
 - `v-text-field`
+
+
+### Dijagram rješenja
+```mermaid
+classDiagram
+direction TB
+
+class App
+
+class TaskForm {
+    editingTitle: string | undefined
+    editingPriority: Priority | undefined
+    isEditing: boolean | undefined
+    add(title: string, priority: Priority)
+    save(title: string, priority: Priority)
+    cancelEdit()
+}
+
+class TaskItem {
+    id: number
+    title: string
+    done: boolean
+    priority: Priority
+    toggle(id: number)
+    delete(id: number)
+    edit(id: number)
+}
+
+class ConfirmModal {
+    modelValue: boolean
+    taskTitle: string
+    confirm()
+    cancel()
+}
+
+App --> TaskForm : uses
+App --> TaskItem : uses
+TaskItem --> ConfirmModal : uses
+```
