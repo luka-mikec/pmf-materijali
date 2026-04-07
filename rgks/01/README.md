@@ -1527,7 +1527,7 @@ Napomena: `<template #prepend>` i `<template #append>` su tzv. *named slots*, me
 ```vue
 <!-- App.vue -->
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watchEffect } from 'vue'
 import TaskForm from './TaskForm.vue'
 import TaskItem from './TaskItem.vue'
 
@@ -1537,9 +1537,20 @@ type Task = {
   done: boolean
 }
 
-const tasks = ref<Task[]>([])
+// Učitavanje stanja iz localStoragea
+const savedInitialTasks = localStorage.getItem('tasks')
+const savedInitialNextId = localStorage.getItem('nextId')
+let parsedInitialTasks: Task[] = [], parsedInitialNextId = 1
+if (savedInitialTasks) {
+  parsedInitialTasks = JSON.parse(savedInitialTasks)
+}
+if (savedInitialNextId) {
+  parsedInitialNextId = parseInt(savedInitialNextId, 10)
+}
+
+const tasks = ref<Task[]>(parsedInitialTasks)
 const filter = ref<'all' | 'active' | 'done'>('all')
-let nextId = 1
+const nextId = ref<number>(parsedInitialNextId)
 
 const filteredTasks = computed(() => {
   switch (filter.value) {
@@ -1556,7 +1567,7 @@ const stats = computed(() => ({
 }))
 
 function addTask(title: string) {
-  tasks.value.push({ id: ++nextId, title, done: false })
+  tasks.value.push({ id: ++nextId.value, title, done: false })
 }
 
 function toggleTask(id: number) {
@@ -1568,17 +1579,10 @@ function deleteTask(id: number) {
   tasks.value = tasks.value.filter(t => t.id !== id)
 }
 
-watch(tasks, (newTasks) => {
-  localStorage.setItem('tasks', JSON.stringify(newTasks))
-}, { deep: true })
-
-onMounted(() => {
-  const saved = localStorage.getItem('tasks')
-  if (saved) {
-    const parsed: Task[] = JSON.parse(saved)
-    tasks.value = parsed
-    nextId = Math.max(...parsed.map(t => t.id), 0) + 1
-  }
+// Spremanje stanja u localStorage
+watchEffect(() => {
+  localStorage.setItem('tasks', JSON.stringify(tasks.value))
+  localStorage.setItem('nextId', nextId.value.toString())
 })
 </script>
 
@@ -1685,4 +1689,113 @@ class ConfirmModal {
 App --> TaskForm : uses
 App --> TaskItem : uses
 TaskItem --> ConfirmModal : uses
+```
+
+## Zadatak 5
+
+Izradit ćemo aplikaciju za upravljanje kalendarskim zadacima na slikama.
+Početni pogled (*Visual*):
+![](_resources/z5_ss1.png)
+*Code* pogled:
+![](_resources/z5_ss3.png)
+Dijalog za kreiranje zadatka:
+![](_resources/z5_ss4.png)
+*Snackbar* poruka o uspješnom kreiranju zadatka:
+![](_resources/z5_ss5.png)
+Brisanje svih zadataka s *progress-barom*:
+![](_resources/z5_ss2.png)
+
+Stvorite sljedeće komponente:
+
+**Osnovno sučelje (`App.vue`)**
+- `v-toolbar` s dva gumba: "New task" i "Clear all". Gumbe razdvojite koristeći `<v-spacer />`.
+- `v-tabs` s dvije kartice/pogleda: "Visual" i "Code".
+- `v-snackbar-queue` za prikazivanje obavijesti (uspješno stvaranje/brisanje zadataka).
+- `v-progress-linear` koji se prikazuje tijekom brisanja svih zadataka.
+- Inicijalizirajte listu zadataka s pet testnih zadataka. Zadatke ne treba spremati u `localStorage`.
+
+**Visual pogled (`VisualView.vue`)**
+- Lista svih zadataka (`TaskCard.vue`).
+- Ako nema zadataka, prikazati `v-alert` s porukom.
+
+**Task kartica (`TaskCard.vue`)**
+- Prikazuje pojedinačni zadatak: ime, lokacija, datum u formatu `yyyy-mm-dd`, `v-chip` za svaku oznaku, i gumb za brisanje.
+
+**Code pogled (`CodeView.vue`)**
+- `v-textarea` u kojem se prikazuje JSON prikaz svih zadataka.
+- Ne trebate validirati JSON kod pohrane (`Apply`), pretpostavite da je sintaksno ispravan i smislen.
+
+**Dijalog za novi zadatak (`TaskDialog.vue`)**
+- `v-dialog` s dva stupca (`v-row`, `v-col`). Na malim ekranima stupci se slažu vertikalno.
+- Lijevi stupac: komponenta `TaskFormView.vue`.
+- Desni stupac: komponenta `TaskCodeView.vue`.
+- Promjene u formi ažuriraju JSON i obrnuto. Koristite samo svojstva i događaje za prijenos informacija.
+- Gumbi "Cancel" i "Save".
+
+**Forma za novi zadatak (`TaskFormView.vue`)**
+- `v-text-field` za ime zadatka.
+- `v-radio-group` s opcijama Home, Work, Other za lokaciju.
+- `v-date-input` za datum (koristite `input-format="yyyy-mm-dd"`, ova komponenta zahtijeva [registraciju](https://vuetifyjs.com/en/components/date-inputs/#installation)).
+- `v-combobox` za oznake (tagove) s `multiple`, `chips` i `closable-chips`. Combobox (za razliku od Autocomplete) dopušta slobodan unos novih oznaka. Kao predložene opcije proslijedite sve dosad korištene oznake.
+
+**JSON prikaz novog zadatka (`TaskCodeView.vue`)**
+- `v-textarea` koji prikazuje zadatak kao JSON.
+
+**Brisanje svih zadataka**
+- Klikom na "Clear all" zadaci se brišu jedan po jedan, s pauzom od jedne sekunde između brisanja. Za pauzu od jedne sekunde možete koristiti ovu naredbu: `await new Promise(resolve => setTimeout(resolve, 1000))`
+- Tijekom brisanja prikazuje se `v-progress-linear` s napretkom.
+
+`TaskDialog`, `TaskFormView` i `TaskCodeView` koriste `TaskWithoutId`, tip koji ne sadrži `id`, jer te komponente rade s novim zadacima kojima još nije dodijeljen ID.
+
+**Napomene**
+- Nazive ikona za `v-btn` (npr. plus unutar *New task* gumba) potražite na https://pictogrammers.com/library/mdi/
+- Za pretvaranje `Date` objekta u format `yyyy-mm-dd` koristite `d.toISOString().substring(0, 10)`.
+- Za stvaranje `Date` objekta iz stringa `yyyy-mm-dd` koristite `new Date(s)`.
+
+### Dijagram rješenja
+
+```mermaid
+classDiagram
+direction TB
+
+class App
+
+class VisualView {
+    tasks: Task[]
+    delete(id: number)
+}
+
+class CodeView {
+    tasks: Task[]
+    apply(tasks: Task[])
+}
+
+class TaskCard {
+    task: Task
+    delete(id: number)
+}
+
+class TaskDialog {
+    modelValue: boolean
+    allTags: string[]
+    save(task: TaskWithoutId)
+}
+
+class TaskFormView {
+    task: TaskWithoutId
+    allTags: string[]
+    update(data: TaskWithoutId)
+}
+
+class TaskCodeView {
+    task: TaskWithoutId
+    update(data: TaskWithoutId)
+}
+
+App --> VisualView : uses
+App --> CodeView : uses
+App --> TaskDialog : uses
+VisualView --> TaskCard : uses
+TaskDialog --> TaskFormView : uses
+TaskDialog --> TaskCodeView : uses
 ```
