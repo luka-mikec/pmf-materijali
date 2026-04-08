@@ -1736,10 +1736,10 @@ Stvorite sljedeće komponente:
 - `v-text-field` za ime zadatka.
 - `v-radio-group` s opcijama Home, Work, Other za lokaciju.
 - `v-date-input` za datum (koristite `input-format="yyyy-mm-dd"`, ova komponenta zahtijeva [registraciju](https://vuetifyjs.com/en/components/date-inputs/#installation)).
-- `v-combobox` za oznake (tagove) s `multiple`, `chips` i `closable-chips`. Combobox (za razliku od Autocomplete) dopušta slobodan unos novih oznaka. Kao predložene opcije proslijedite sve dosad korištene oznake.
+- `v-combobox` za oznake (tagove) s `multiple`, `chips` i `closable-chips`. Combobox (za razliku od Autocomplete) dopušta slobodan unos novih oznaka. Kao predložene opcije proslijedite sve oznake koje se koriste u trenutnim zadacima.
 
 **JSON prikaz novog zadatka (`TaskCodeView.vue`)**
-- `v-textarea` koji prikazuje zadatak kao JSON.
+- `v-textarea` koji prikazuje zadatak kao JSON (može se uređivati i na svaku promjenu javlja novi sadržaj).
 
 **Brisanje svih zadataka**
 - Klikom na "Clear all" zadaci se brišu jedan po jedan, s pauzom od jedne sekunde između brisanja. Za pauzu od jedne sekunde možete koristiti ovu naredbu: `await new Promise(resolve => setTimeout(resolve, 1000))`
@@ -1778,6 +1778,7 @@ class TaskCard {
 class TaskDialog {
     modelValue: boolean
     allTags: string[]
+    update:modelValue(value: boolean)
     save(task: TaskWithoutId)
 }
 
