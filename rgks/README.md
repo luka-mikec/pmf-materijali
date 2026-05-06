@@ -5,9 +5,9 @@ Ovdje su materijali s nastave iz kolegija Razvoj grafičkih korisničkih sučelj
 ## Sadržaj kolegija
 
 [Tema 1: Pregled biblioteke Vue](./01/README.md)
+
 [Tema 2: Minimalna full-stack aplikacija](./02/README.md)
 
-...
 
 ## Cloud provideri
 
