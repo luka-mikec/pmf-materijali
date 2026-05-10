@@ -484,6 +484,7 @@ export async function fetchTasks() {
   let page = 1
   while (true) {
     const response = await fetch(`/api/tasks/?page=${page}`)
+    if (response.status === 404 && page > 1) break
     await throwIfError(response)
     const data = await response.json() as TasksPage
     tasks.push(...data.results)
@@ -549,48 +550,63 @@ Osim `queryKey` i `queryFn`, možemo proslijediti još neke opcije:
 
 ## `useMutation`
 
-`useMutation` koristimo za `POST`, `PATCH` i `DELETE` HTTP metode. Za razliku od `useQuery` funkcija, `useMutation` funkcije ne pozivaju se automatski, već pozivom  funkcije `mutate()`. 
+`useMutation` koristimo za `POST`, `PATCH` i `DELETE` HTTP metode. Za razliku od `useQuery` funkcija, `useMutation` funkcije ne pozivaju se automatski, već pozivom funkcije `mutate(...)` ili `mutateAsync(...)` (potonja podržava `await mutateAsync(...)`).
 
-Često imamo situaciju da u programu imamo i `useMutation` i `useQuery` pozive koji se odnose na iste podatke. Npr. imamo formu koja dodaje novi zadatak i ispod nje popis svih zadataka. Vue općenito naravno ne može znati da je to dvoje povezano, pa moramo sami pratiti ovisnosti i pozivati `invalidateQueries` po potrebi.
+Često se mutacijom mijenjaju podaci koje čita neki `useQuery`. Npr. na istoj je stranici mutacija za dodavanje novog zadatka, i `useQuery` koji čita popis svih zadataka. Vue ne može znati da je to dvoje povezano, pa moramo sami osvježiti `useQuery` podatke nakon promjene. Imamo nekoliko opcija:
+
+1. U `onSuccess` izravno izmijeniti `useQuery` podatke kroz `queryClient.setQueryData(...)`.
+2. Umjesto da se oslanjamo na `data` koji vraća `useQuery`, možemo kao i ranije u `localStorage` primjerima imati vlastite varijable za lokalno stanje. Promjene zapisujemo lokalno i na server, ali ne čitamo podatke sa servera osim kad moramo (npr. inicijalno učitavanje).
+3. U `onSuccess` možemo pozvati `queryClient.invalidateQueries({ queryKey })` koja uzrokuje ponovno dohvaćanje podataka s backenda za sve ključeve koji započinju prefiksom `queryKey`. Dakle, nakon uspješne izrade zadatka ponovno bismo učitali zadatke koji bi sada među sobom imali i novi zadatak. 
+4. Kad smo ranije spremali podatke u `localStorage`, na svaku promjenu lokalnog stanja spremali bismo čitavo stanje (npr. sve zadatke) iznova u `localStorage` koristeći `watchEffect`. U principu to možemo i sada napraviti. No želimo izbjeći velike HTTP zahtjeve (koji sadrže npr. stotine zadataka) i nepotrebno ponovno pisanje u bazu. 
+ 
+Treći je pristup najjednostavniji pristup, ali uzrokuje nepotreban poziv serveru. Primjerice, ako je stvaranje zadatka na serveru bilo uspješno, ne moramo zbog toga ponovno dohvaćati sve stare zadatke. Umjesto toga, možemo zaključiti da su prisutni svi zadaci kao ranije, osim novododanog. Osim nepotrebnog poziva serveru, drugi se problem s ovim pristupom javlja kad radimo više istovremenih promjena (npr. u kratkom vremenu pokušamo dodati 10 zadataka). Svaka od ovih promjena pozvat će `invalidateQueries`. No, `vue-query` ne podržava istovremeno paralelno dohvaćanje za isti query, pa svaki poziv `invalidateQueries` prekida dotadašnji poziv dohvaćanja zadataka i pokreće novi takav poziv. Ako smo u kratkom vremenu pokušali stvoriti 10 zadataka, tek ćemo nakon uspješnog dodavanja desetog zadatka i ponovnog dohvaćanja svih zadataka vidjeti prvi dodani zadatak. 
+
+U praksi su prva tri pristupa prihvatljiva. No zbog navedenih nedostataka trećeg pristupa, mi ćemo preferirati prva dva pristupa. U primjerima u ovom poglavlju prvi je pristup najprikladniji.
 
 ```typescript
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import { createTask } from '@/api'
+import type { Task } from '@/types'
 
 const queryClient = useQueryClient()
 
 const createMutation = useMutation({
   mutationKey: ['createTask'],
   mutationFn: createTask,
-  onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+  onSuccess: (outputData, inputData) => {
+    queryClient.setQueryData<Task[]>(['tasks'], (old) =>
+        old ? [outputData, ...old] : [outputData],
+    )
+  },
 })
 
 // Npr. kad korisnik klikne 'Add':
 createMutation.mutate({ title: 'Do work', priority: 'Low' })
 ```
 
-U slučaju da koristimo `useQuery` ključeve s više elemenata, na poziv `queryClient.invalidateQueries({ queryKey: ['tasks'] })` ponovno se dohvaćaju svi s danim prefiksom (npr. `["tasks", "1"]`).
+`onSuccess` prima dva argumenta: `outputData` (povratna vrijednost funkcije `mutationFn`, u ovom primjeru to je zadatak koji nam je vratio backend) i `inputData` (ulaz s kojim je `mutationFn` pozvana, npr. `{ title: 'Do work', priority: 'Low' }`). Analogni `useMutation` pozivi za `updateTask` i `deleteTask` bit će dio Zadatka 6.
 
-Ponekad je korisno znati koji se `useMutation` pozivi trenutno odvijaju. Za to možemo koristiti `useMutationState`:
+`mutationKey` (npr. `['createTask']`) identificira mutaciju. Koristit ćemo te ključeve za dobiti popis mutacija koje se trenutno izvršavaju.
 
-```
-const updatingTaskIds = useMutationState({
-  filters: { mutationKey: ['updateTask'], status: 'pending' },
-  select: (m) => (m.state.variables as Task | undefined)?.id,
-})
-```
+## `useMutationState`
 
-Sada primjerice možemo onemogućiti promjene u svim komponentama koje uređuju zadatke nad kojima se trenutno događaju promjene (njihov ID je u listi `updatingTaskIds.value`).
+Ponekad je korisno znati koji se `useMutation` pozivi trenutno odvijaju. Npr. za vrijeme `PATCH` ili `DELETE` poziva nad nekim zadatkom, za taj zadatak želimo onemogućiti *checkbox* za promjenu završenosti zadatka te i gumb za brisanje. Za to koristimo `useMutationState`, koja vraća reaktivnu listu varijabli (ulaza) trenutno aktivnih mutacija čiji `mutationKey` započinje zadanim prefiksom.
 
 ```typescript
+import { useMutationState } from '@tanstack/vue-query'
 
 const updatingTaskIds = useMutationState({
   filters: { mutationKey: ['updateTask'], status: 'pending' },
-  select: (m) => (m.state.variables as Task | undefined)?.id,
+  select: (m) => (m.state.variables as Task).id
 })
 
+const deletingTaskIds = useMutationState({
+  filters: { mutationKey: ['deleteTask'], status: 'pending' },
+  select: (m) => m.state.variables as number,
+})
+```
 
-```typescript
+`updatingTaskIds.value` i `deletingTaskIds.value` su sad reaktivne liste ID-eva zadataka čije su izmjene odnosno brisanja u tijeku. Koristit ćemo ih u Zadatku 6 za prikazivanje stanja čekanja u UI-ju.
 
 ## start_local.sh
 
@@ -645,13 +661,17 @@ Skriptu zaustavljate s `Ctrl + C`, što će zaustaviti oba servera
 
 Promijenite rješenje Zadatka 4 (Vuetify To-Do lista s lokalnim stanjem) tako da koristi `vue-query` i backend umjesto da sprema zadatke u `localStorage`. Glavne razlike:
 
-- `tasks` je sad `computed` svojstvo izvedeno iz `tasksQuery.data.value`.
-- `localStorage` više ne koristimo.
+- `tasks` je sad `computed` svojstvo koje vraća `tasksQuery.data.value`.
 - `nextId` nije potreban: backend dodjeljuje ID-eve.
-- `addTask`, `toggleTask`, `deleteTask`, `saveEdit` sad sadrže `mutate` pozive.
+- `addTask`, `toggleTask`, `deleteTask` (preimenujte jer imamo istoimenu funkciju u `api.ts`), `saveEdit` sad pozivaju `mutate(...)` na odgovarajućoj `useMutation` instanci (`createMutation`, `updateMutation`, `deleteMutation`).
 - Filteri poput prioriteta neka zasad ostanu na klijentskoj strani, dakle koristeći `computed` svojstvo `filteredTasks` kao i ranije.
 - Za query koji dohvaća zadatke prikažite poruku kad se prvi put učitava (`isLoading.value`), npr. koristeći `v-alert` komponentu, i formatiranu poruku o grešci koristeći `formatError` ako dođe do greške (`isError.value`).
-- Za svaki mutation prikažite formatiranu grešku (ako postoji) u `v-alert` komponenti.
+- Za svaku mutaciju prikažite formatiranu grešku (ako postoji) u `v-alert` komponenti.
 
-Komponente `TaskForm.vue`, `TaskItem.vue`, `ConfirmModal.vue` ostaju iste kao ranije.
+S obzirom na to da serverske operacije mogu potrajati neko vrijeme, ovisno o stanju internetske veze i zagušenja servera, uvodimo i sljedeće promjene:
 
+- `TaskItem` neka prima novo svojstvo `isMutating: boolean`. U `App.vue` postavite ga kao `:isMutating="updatingTaskIds.includes(task.id) || deletingTaskIds.includes(task.id)"`.
+- Unutar `TaskItem` komponente, na `v-list-item` komponenti postavite `:disabled="isMutating"`. Vuetify time blokira `@click` handler i CSS stilom signalizira da je ta stavka liste onemogućena. Na delete gumbu unutar reda koristite `:loading="isMutating"` (Vuetify prikazuje animaciju umjesto ikone i blokira klik).
+- `TaskForm` neka prima svojstvo `isMutating: boolean`. U `App.vue` izračunajte ga kao: kreiranje u tijeku (`createMutation.isPending`) ili je u tijeku mijenjanje zadatka koji se uređuje (`editingId !== null && (updatingTaskIds.includes(editingId) || deletingTaskIds.includes(editingId))`). Na gumbu unutar forme postavite `:loading="isMutating"`.
+
+Sve komponente možete kopirati iz Zadatka 4 i dodati opisane promjene. Datoteka `ConfirmModal.vue` ostaje ista kao ranije.
