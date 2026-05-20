@@ -46,7 +46,10 @@ Frontend će biti dostupan na [http://localhost:3000](http://localhost:3000). Mo
 server: {
   port: 5173,
   proxy: {
-    '/api': 'http://localhost:8000',
+    "/api": {
+      target: "http://localhost:8000",
+      changeOrigin: true
+    }
   }
 }
 ```
@@ -143,7 +146,7 @@ Django dolazi s gotovim administracijskim sučeljem na URL-u `/admin/`. Za prist
 python manage.py createsuperuser
 ```
 
-Unesite username, e-mail i lozinku. (E-mail nije obavezan.) Pokrenite server (ekvivalent `npm run dev`):
+Unesite username, email i lozinku. (Email nije obavezan.) Pokrenite server (ekvivalent `npm run dev`):
 
 ```bash
 python manage.py runserver
@@ -657,6 +660,7 @@ Pokrenite `chmod +x start_local.sh` prije prvog pokretanja, i potom:
 Frontend je sad dostupan na [http://localhost:5173](http://localhost:5173). Skripta po potrebi stvara i pokreće migracije, i potom pokreće backend i frontend servere u pozadini.
 Skriptu zaustavljate s `Ctrl + C`, što će zaustaviti oba servera
 
+
 ## Zadatak 6
 
 Promijenite rješenje Zadatka 4 (Vuetify To-Do lista s lokalnim stanjem) tako da koristi `vue-query` i backend umjesto da sprema zadatke u `localStorage`. Glavne razlike:
@@ -675,3 +679,403 @@ S obzirom na to da serverske operacije mogu potrajati neko vrijeme, ovisno o sta
 - `TaskForm` neka prima svojstvo `isMutating: boolean`. U `App.vue` izračunajte ga kao: kreiranje u tijeku (`createMutation.isPending`) ili je u tijeku mijenjanje zadatka koji se uređuje (`editingId !== null && (updatingTaskIds.includes(editingId) || deletingTaskIds.includes(editingId))`). Na gumbu unutar forme postavite `:loading="isMutating"`.
 
 Sve komponente možete kopirati iz Zadatka 4 i dodati opisane promjene. Datoteka `ConfirmModal.vue` ostaje ista kao ranije.
+
+## Zadatak 7
+Trenutno u frontendu prvo petljom dohvaćamo sve stranice i tek ih onda prikazujemo. Pogledajte dokumentaciju za `v-data-table-server` i implementirajte prikaz zadataka koristeći tu komponentu, na način da se ne dohvaća više stranica nego što je potrebno. Neka su filteri sada na strani servera, i neka promjena filtera resetira paginaciju. U DevTools alatu browsera, u Network tabu možete vidjeti sve HTTP pozive, uključujući API endpointe. Tu možete provjeriti da se ne dohvaćaju nepotrebne stranice. Korisno je inicijalizirati bazu s velikim brojem zadataka (npr. pokrenite `python manage.py shell` i potom `from api.models import Task; [Task.objects.create(title=f'Task {i}', priority='Low') for i in range(100)]`) kako biste mogli testirati radi li paginacija ispravno.
+
+## Autentikacija
+
+U današnjim web aplikacijama za autentikaciju gotovo se isključivo koristi OIDC protokol. U tom protokolu razlikujemo sljedeće glavne komponente:
+- *Identity provider (IdP)*: servis koji pohranjuje korisničke račune. U našem slučaju to je Microsoftova Entra ID platforma (bivši Azure Active Directory), što je ujedno i najčešće korišten IdP. Vrlo je popularan i Google Identity Platform ('Login with Google').
+- *Resource server*: servis koji imamo potrebu zaštititi (zbog kojeg nam je potrebna autentikacija). Obično je to neki API. U našem slučaju to je naš backend API. 
+- *Client*: aplikacija koja želi pristupiti resursu (API-ju) u ime korisnika. U našem slučaju to je frontend aplikacija. Ponekad se klijent i resurs mogu promatrati kao jedna cjelina, što ćemo i mi napraviti kako bismo pojednostavili konfiguraciju.
+
+Više je metoda ('flow') koje klijent može koristiti da se autenticira i dobije pristup resursu. Mi ćemo koristiti tzv. 'authorization code flow with PKCE'. U praksi ćete se vjerojatno susretati i s 'client credentials flow' te 'authorization code, confidential' (ako vas zanima jednostavno rješenje za OIDC izvan ovog kolegija, pogledajte OAuth2 Proxy, koji se oslanja na potonji). Ovo su koraci u authorization code flow with PKCE:
+1. Klijent (npr. frontend) preusmjeri korisnika na IdP (Entra ID) da se autenticira. Uz to, klijent šalje i neke dodatne informacije, poput `client_id` (koji identificira klijenta), `scope` (koji specificira koje profilne informacije trebaju klijentu, i koje privilegije klijent treba na resursu) i `redirect_uri` (koji specificira gdje IdP treba preusmjeriti browser nakon autentikacije).
+2. Nakon uspješne autentikacije, IdP preusmjeri korisnika natrag na klijentsku aplikaciju (npr. URL frontenda) uz postavljen authorization code.
+3. Klijent zatim koristi authorization code da zatraži tzv. *ID token* (informacije o korisniku) i *access token* (token koji će se koristiti za pristup resurs serveru) od IdP-a. 
+4. Ako je sve u redu, IdP vraća ID token i access token klijentu.
+5. Klijent sada može pročitati informacije o korisniku iz ID tokena, i pozivati resurs. Npr., ako je resurs HTTP API, najčešće se *access token* šalje kao HTTP headeru koji se zove `Authorization`. Resurs koristi javni ključ IdP-a (JWKS) da provjeri je li token valjan i ima li potrebne privilegije. Ako je sve u redu, izvršava zahtjev klijenta. Isti access token koristi se i u budućim pozivima API-a, dok ne istekne trajanje tokena.
+
+Kako bismo mogli koristiti OIDC, prvo moramo registrirati naš resurs i našeg klijenta u Entra ID-u; u našem slučaju, klijent i resurs promatramo kao istu aplikaciju, pa će nam trebati samo jedna registracija. To radimo kroz Azure Portal:
+
+1. Otvorite [Azure Portal -> App registrations -> New registration](https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade)
+2. Name: `RGKS App`
+3. Supported account types: Single tenant
+4. Redirect URI: **Single-page application (SPA)**, upišite `http://localhost:5173`
+5. Kliknite na Register. Nakon registracije, otvorite *Overview* stranicu registrirane aplikacije i kopirajte *Tenant ID (directory)* i *Client ID (application)*.
+6. Kliknite na **Manage**, **Expose an API**, pa **Add a scope**. U formi koja se pojavi:
+   - Postavite Application ID URI: `api://client-id` (zamijenite `client-id` stvarnom vrijednošću Client ID-a iz prethodnog koraka) i potvrdite unos,
+   - Dodajte scope: `access_as_user` (arbitrarno ime), postavite da obični korisnici mogu dati *consent* za korištenje aplikacije, te ostala polja ispunite po želji, npr. ime može biti "Pristup RGSK aplikaciji". Spremite promjene.
+7. Otvorite **Manifest** i postavite `"requestedAccessTokenVersion": 2`. Kliknite **Save**.
+
+U direktoriju gdje se nalazi `start_local.sh` stvorite i datoteku naziva `.env`. Zalijepite Tenant ID i Client ID u tu datoteku: 
+```
+VITE_CLIENT_ID=...
+VITE_TENANT_ID=...
+```
+
+### Integracija autentikacije
+
+Sad trebamo prilagoditi naš frontend kako bi se ponašao kao OIDC klijent, i naš backend kako bi se ponašao kao OIDC resurs:
+- Dodat ćemo biblioteku za autentikaciju za frontend (MSAL) i povezati ju s ostatkom frontend koda.
+- U backendu dodajemo provjeru *bearer* tokena u `Authorization` headeru svakog API zahtjeva, i pišemo kod koji povezuje Django korisničke račune (`User`) s Entra ID korisničkim računima.
+
+#### Frontend
+
+Instalirajte MSAL (*Microsoft Authentication Library*):
+
+```bash
+cd frontend
+npm i @azure/msal-browser
+```
+
+Vite očekuje `.env` u korijenu frontend projekta (`frontend/`), no naš se `.env` nalazi jedan direktorij iznad (uz `start_local.sh`). Zato u `vite.config.mts` dodajemo `envDir`:
+
+```typescript
+// vite.config.mts
+...
+  envDir: fileURLToPath(new URL('..', import.meta.url)),
+  server: {
+    port: 5173,
+    proxy: {
+      "/api": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+      },
+    },
+  }
+...
+```
+
+`@azure/msal-browser` ne koristi Vue reaktivnost, pa pišemo reaktivni *wrapper* u `src/auth/useAuth.ts`. Trebamo sljedeće funkcionalnosti: inicijalizacija MSAL biblioteke, referenca `account` koja čuva trenutnog korisnika, funkcije `login` i `logout`, te funkcija koja dohvaća *access token* za pozive prema našem API-u.
+
+```typescript
+// src/auth/useAuth.ts
+import {
+  EventType,
+  InteractionRequiredAuthError,
+  PublicClientApplication,
+  type AccountInfo,
+  type Configuration,
+  type SilentRequest,
+} from '@azure/msal-browser'
+import { computed, ref } from 'vue'
+
+// Dohvaćanje varijabli iz .env datoteke: import.meta.env.VITE_* (važno je da varijabla počinje prefiksom VITE_)
+// Client ID (app registration) i Tenant ID (Azure AD tenant) imaju iste vrijednosti za sva okruženja.
+// No, kako se radi o donekle povjerljivim podacima, ne želimo ih imati kao dio git koda.
+// Ne bi bio ozbiljan problem da se nalaze u kodu jer će biti vidljivi u JavaScriptu koji se šalje klijentu.
+
+const clientId = import.meta.env.VITE_CLIENT_ID
+const tenantId = import.meta.env.VITE_TENANT_ID
+
+const msalConfig: Configuration = {
+  auth: {
+    clientId,
+    authority: `https://login.microsoftonline.com/${tenantId}`,
+    redirectUri: window.location.origin,
+  },
+  cache: { cacheLocation: 'sessionStorage' },
+}
+
+const tokenRequest: SilentRequest = {
+  // Kod izrade App Registration odabrali smo ime access_as_user za 'scope' koje je bilo arbitratno, sad je važno da koristimo isto ime
+  scopes: [`api://${clientId}/access_as_user`],
+}
+
+let msalInstance: PublicClientApplication | null = null
+const accounts = ref<AccountInfo[]>([])
+const isAuthenticated = computed(() => accounts.value.length > 0)
+const account = computed(() => accounts.value[0] ?? null)
+
+export async function initAuth() {
+  // Ova funkcija poziva se samo jednom (u main.ts) i inicijalizira globalne varijable u ovoj datoteci.
+  msalInstance = new PublicClientApplication(msalConfig)
+  await msalInstance.initialize()
+
+  // Kad Azure završi login proces, preusmjerava preglednik na našu aplikaciju.
+  // U tom slučaju MSAL treba pročitati postavljene parametre u URL-u i obraditi ih.
+  // Ovo želimo napraviti prije inicijalizacije Vue aplikacije, jer bi Azureovi URL parametri (`http://localhost:5173?code=...#state=...`)  mogli zbuniti našu aplikaciju.
+  await msalInstance.handleRedirectPromise()
+  accounts.value = msalInstance.getAllAccounts()
+
+  msalInstance.addEventCallback((event) => {
+    if (event.eventType === EventType.LOGIN_SUCCESS ||
+        event.eventType === EventType.ACQUIRE_TOKEN_SUCCESS) {
+      accounts.value = msalInstance!.getAllAccounts()
+    }
+    if (event.eventType === EventType.LOGOUT_SUCCESS) {
+      accounts.value = []
+    }
+  })
+}
+
+function login() {
+  msalInstance!.loginRedirect({ scopes: ['openid', 'profile', 'email'] })
+}
+
+function logout() {
+  msalInstance!.logoutRedirect()
+}
+
+async function getApiToken(): Promise<string> {
+  // ID token sadrži podatke o korisniku, ali ne i dopuštenja koja korisnik ima za pojedini API.
+  // Zbog toga kad šaljemo zahtjeve vanjskim servisima (uključujući i naš API), trebamo access token.
+  try {
+    const response = await msalInstance!.acquireTokenSilent({
+      ...tokenRequest,
+      account: account.value!,
+    })
+    return response.accessToken
+  } catch (error) {
+    if (error instanceof InteractionRequiredAuthError) {
+      // Preusmjerava na login; ovim pozivom završava cijela naša skripta jer browser napušta trenutnu stranicu
+      await msalInstance!.acquireTokenRedirect(tokenRequest)
+    }
+    throw error
+  }
+}
+
+export function useAuth() {
+  return { isAuthenticated, account, login, logout, getApiToken }
+}
+```
+
+Kako moramo pričekati da `initAuth()` završi prije inicijalizacije Vue aplikacije, moramo dodati asinkronu funkciju (npr. `main` ili `bootstrap`) koja može pozvati `await initAuth()`, i unutar te funkcije inicijalizirati Vue aplikaciju. To radimo u `src/main.ts`:
+
+```typescript
+// src/main.ts
+import { createApp } from 'vue'
+import App from './App.vue'
+import { initAuth } from './auth/useAuth'
+import { registerPlugins } from '@/plugins'
+
+async function bootstrap() {
+  await initAuth()
+  const app = createApp(App)
+  registerPlugins(app)
+  app.mount('#app')
+}
+
+bootstrap()
+```
+
+Sad u `src/api.ts` u svakom `fetch` pozivu prema backendu dohvaćamo *access token* i dodajemo ga u `Authorization` header:
+
+```typescript
+// src/api.ts (modifikacija postojećih funkcija)
+import { useAuth } from './auth/useAuth'
+
+const { getApiToken } = useAuth()
+
+export async function fetchTasks() {
+  const tasks: Task[] = []
+  let page = 1
+  while (true) {
+    const token = await getApiToken()
+    const response = await fetch(`/api/tasks/?page=${page}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (response.status === 404 && page > 1) break
+    await throwIfError(response)
+    const data = await response.json() as TasksPage
+    tasks.push(...data.results)
+    if (!data.next) break
+    ++page
+  }
+  return tasks
+}
+
+export async function createTask(payload: { title: string; priority: Priority }) {
+  const token = await getApiToken()
+  const response = await fetch('/api/tasks/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(payload),
+  })
+  await throwIfError(response)
+  return await response.json() as Task
+}
+```
+
+Slične promjene možete dodati u preostale funkcije koje pozivaju API. Zatim mijenjamo `App.vue`.
+
+```typescript
+// src/App.vue, promjene u <script setup>
+import { useAuth } from './auth/useAuth'
+
+const { isAuthenticated, account, login, logout } = useAuth()
+```
+
+U `<v-app-bar>`, kroz `#append` slot, dodajemo ime prijavljenog korisnika i *Log in* i *Log out* radnje.
+
+```vue
+<v-app-bar color="primary">
+  <v-app-bar-title>To-do List</v-app-bar-title>
+
+  <template #append>
+    <span v-if="isAuthenticated" class="mr-3 text-body-2">
+      {{ account?.name ?? account?.username }}
+    </span>
+    <v-btn v-if="!isAuthenticated" variant="outlined" @click="login">Log in</v-btn>
+    <v-btn v-else variant="outlined" @click="logout">Log out</v-btn>
+  </template>
+</v-app-bar>
+```
+
+Kad korisnik nije prijavljen prikazujemo poruku:
+
+```vue
+<v-main>
+  <v-container>
+    <v-alert v-if="!isAuthenticated" type="info">
+      Log in to view tasks.
+    </v-alert>
+
+    <v-card v-else variant="outlined">
+      <!-- ... -->
+    </v-card>
+  </v-container>
+</v-main>
+```
+
+#### Backend
+
+Pišemo vlastitu DRF autentikacijsku klasu koja za svaki HTTP zahtjev čita *access token* iz `Authorization` headera, lokalno verificira njegov potpis koristeći javne ključeve Entra ID-a (JWKS), i ako je sve u redu vraća odgovarajući Django `User` zapis. Za parsiranje i verifikaciju JWT-a koristimo `PyJWT` paket (aktivirajte virtualno okruženje i pokrenite `poetry add PyJWT`).
+
+```python
+# api/authentication.py
+
+# Iako za autentikaciju koristimo Azure, a ne Django (koji nudi nekoliko vlastitih tipova autentikacije),
+# uz donju klasu i dalje možemo koristiti primjerice request.user za pristup informacijama o korisniku.
+
+import jwt
+from django.conf import settings
+from django.contrib.auth.models import User
+from jwt import PyJWKClient
+from rest_framework.authentication import BaseAuthentication
+from rest_framework.exceptions import AuthenticationFailed
+
+_jwk_client: PyJWKClient | None = None
+
+
+def _get_jwk_client() -> PyJWKClient:
+    global _jwk_client
+    if _jwk_client is None:
+        jwks_url = (
+            f"https://login.microsoftonline.com/"
+            f"{settings.AZURE_AD_TENANT_ID}/discovery/v2.0/keys"
+        )
+        _jwk_client = PyJWKClient(jwks_url)
+    return _jwk_client
+
+
+class AzureADAuthentication(BaseAuthentication):
+    def authenticate(self, request):
+        auth_header = request.META.get("HTTP_AUTHORIZATION", "")
+        if not auth_header.startswith("Bearer "):
+            return None
+
+        token = auth_header[7:]
+        try:
+            signing_key = _get_jwk_client().get_signing_key_from_jwt(token)
+            payload = jwt.decode(
+                token,
+                signing_key.key,
+                algorithms=["RS256"],
+                audience=settings.AZURE_AD_CLIENT_ID,
+                issuer=[
+                    f"https://login.microsoftonline.com/{settings.AZURE_AD_TENANT_ID}/v2.0",
+                    f"https://sts.windows.net/{settings.AZURE_AD_TENANT_ID}/",
+                ],
+                options={"require": ["exp", "nbf", "iss", "aud", "sub"]},
+            )
+        except jwt.ExpiredSignatureError:
+            raise AuthenticationFailed("Token has expired.")
+        except jwt.InvalidTokenError as exc:
+            print("Token validation failed:", exc)
+            raise AuthenticationFailed(f"Invalid token: {exc}")
+
+        user = self._get_or_create_user(payload)
+        return (user, payload)
+
+    @staticmethod
+    def _get_or_create_user(payload: dict) -> User:
+        sub = payload.get("sub", "")
+        if not sub:
+            raise AuthenticationFailed("Token missing 'sub' claim.")
+
+        given_name = payload.get("given_name", "")
+        family_name = payload.get("family_name", "")
+        full_name = payload.get("name", "")
+
+        if given_name or family_name:
+            first_name = given_name
+            last_name = family_name
+        else:
+            first_name = full_name
+            last_name = ""
+
+        user, created = User.objects.get_or_create(
+            username=sub,
+            defaults={
+                "email": payload.get("preferred_username", ""),
+                "first_name": first_name,
+                "last_name": last_name,
+            },
+        )
+
+        if not created:
+            # Korisniku u Entra ID može se promijeniti ime ili email; zbog toga po potrebi osvježavamo Django korisnika
+            new_email = payload.get("preferred_username", user.email)
+            new_first_name = first_name or user.first_name
+            new_last_name = last_name or user.last_name
+            if (user.email, user.first_name, user.last_name) != (new_email, new_first_name, new_last_name):
+                user.email = new_email
+                user.first_name = new_first_name
+                user.last_name = new_last_name
+                user.save(update_fields=["email", "first_name", "last_name"])
+
+        return user
+```
+
+Funkcija `_get_or_create_user` osigurava da se prvi put kad se korisnik prijavi automatski stvori `User` redak u Django bazi. Kao `username` koristimo nepromjenjiv `sub` claim iz Entra ID-a (ne email, jer se email može promijeniti).
+
+U `config/settings.py` čitamo Tenant ID i Client ID iz okruženja te uključujemo novu autentikacijsku klasu. Mijenjamo i `DEFAULT_PERMISSION_CLASSES` tako da svi zahtijevaju autentikaciju:
+
+```python
+# config/settings.py
+import os
+
+AZURE_AD_TENANT_ID = os.environ.get("VITE_TENANT_ID", "")
+AZURE_AD_CLIENT_ID = os.environ.get("VITE_CLIENT_ID", "")
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "api.authentication.AzureADAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+    # paginacija kao i ranije
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 20,
+}
+```
+
+Da bi `start_local.sh` proslijedio `VITE_TENANT_ID` i `VITE_CLIENT_ID` Django procesu, prije pokretanja backenda učitavamo varijable iz `.env`:
+
+```bash
+# start_local.sh, prije "Starting backend..."
+set -a
+source .env
+set +a
+```
+
+Sad prilikom obrade zahtjeva možemo koristiti `request.user`. To je instanca Django `User` modela koja sadrži podskup podataka iz tokena. Ako neki endpoint želite ostaviti javnim, dodajte mu `@permission_classes([AllowAny])` (iz `rest_framework.decorators` i `rest_framework.permissions`).
+
+```bash
+./start_local.sh
+```
+
