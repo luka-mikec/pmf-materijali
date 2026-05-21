@@ -661,28 +661,6 @@ Frontend je sad dostupan na [http://localhost:5173](http://localhost:5173). Skri
 Skriptu zaustavljate s `Ctrl + C`, što će zaustaviti oba servera
 
 
-## Zadatak 6
-
-Promijenite rješenje Zadatka 4 (Vuetify To-Do lista s lokalnim stanjem) tako da koristi `vue-query` i backend umjesto da sprema zadatke u `localStorage`. Glavne razlike:
-
-- `tasks` je sad `computed` svojstvo koje vraća `tasksQuery.data.value`.
-- `nextId` nije potreban: backend dodjeljuje ID-eve.
-- `addTask`, `toggleTask`, `deleteTask` (preimenujte jer imamo istoimenu funkciju u `api.ts`), `saveEdit` sad pozivaju `mutate(...)` na odgovarajućoj `useMutation` instanci (`createMutation`, `updateMutation`, `deleteMutation`).
-- Filteri poput prioriteta neka zasad ostanu na klijentskoj strani, dakle koristeći `computed` svojstvo `filteredTasks` kao i ranije.
-- Za query koji dohvaća zadatke prikažite poruku kad se prvi put učitava (`isLoading.value`), npr. koristeći `v-alert` komponentu, i formatiranu poruku o grešci koristeći `formatError` ako dođe do greške (`isError.value`).
-- Za svaku mutaciju prikažite formatiranu grešku (ako postoji) u `v-alert` komponenti.
-
-S obzirom na to da serverske operacije mogu potrajati neko vrijeme, ovisno o stanju internetske veze i zagušenja servera, uvodimo i sljedeće promjene:
-
-- `TaskItem` neka prima novo svojstvo `isMutating: boolean`. U `App.vue` postavite ga kao `:isMutating="updatingTaskIds.includes(task.id) || deletingTaskIds.includes(task.id)"`.
-- Unutar `TaskItem` komponente, na `v-list-item` komponenti postavite `:disabled="isMutating"`. Vuetify time blokira `@click` handler i CSS stilom signalizira da je ta stavka liste onemogućena. Na delete gumbu unutar reda koristite `:loading="isMutating"` (Vuetify prikazuje animaciju umjesto ikone i blokira klik).
-- `TaskForm` neka prima svojstvo `isMutating: boolean`. U `App.vue` izračunajte ga kao: kreiranje u tijeku (`createMutation.isPending`) ili je u tijeku mijenjanje zadatka koji se uređuje (`editingId !== null && (updatingTaskIds.includes(editingId) || deletingTaskIds.includes(editingId))`). Na gumbu unutar forme postavite `:loading="isMutating"`.
-
-Sve komponente možete kopirati iz Zadatka 4 i dodati opisane promjene. Datoteka `ConfirmModal.vue` ostaje ista kao ranije.
-
-## Zadatak 7
-Trenutno u frontendu prvo petljom dohvaćamo sve stranice i tek ih onda prikazujemo. Pogledajte dokumentaciju za `v-data-table-server` i implementirajte prikaz zadataka koristeći tu komponentu, na način da se ne dohvaća više stranica nego što je potrebno. Neka su filteri sada na strani servera, i neka promjena filtera resetira paginaciju. U DevTools alatu browsera, u Network tabu možete vidjeti sve HTTP pozive, uključujući API endpointe. Tu možete provjeriti da se ne dohvaćaju nepotrebne stranice. Korisno je inicijalizirati bazu s velikim brojem zadataka (npr. pokrenite `python manage.py shell` i potom `from api.models import Task; [Task.objects.create(title=f'Task {i}', priority='Low') for i in range(100)]`) kako biste mogli testirati radi li paginacija ispravno.
-
 ## Autentikacija
 
 U današnjim web aplikacijama za autentikaciju gotovo se isključivo koristi OIDC protokol. U tom protokolu razlikujemo sljedeće glavne komponente:
@@ -1079,3 +1057,54 @@ Sad prilikom obrade zahtjeva možemo koristiti `request.user`. To je instanca Dj
 ./start_local.sh
 ```
 
+## Zadatak 6
+
+Promijenite rješenje Zadatka 4 (Vuetify To-Do lista s lokalnim stanjem) tako da koristi `vue-query` i backend umjesto da sprema zadatke u `localStorage`. Glavne razlike:
+
+- `tasks` je sad `computed` svojstvo koje vraća `tasksQuery.data.value`.
+- `nextId` nije potreban: backend dodjeljuje ID-eve.
+- `addTask`, `toggleTask`, `deleteTask` (preimenujte jer imamo istoimenu funkciju u `api.ts`), `saveEdit` sad pozivaju `mutate(...)` na odgovarajućoj `useMutation` instanci (`createMutation`, `updateMutation`, `deleteMutation`).
+- Filteri poput prioriteta neka zasad ostanu na klijentskoj strani, dakle koristeći `computed` svojstvo `filteredTasks` kao i ranije.
+- Za query koji dohvaća zadatke prikažite poruku kad se prvi put učitava (`isLoading.value`), npr. koristeći `v-alert` komponentu, i formatiranu poruku o grešci koristeći `formatError` ako dođe do greške (`isError.value`).
+- Za svaku mutaciju prikažite formatiranu grešku (ako postoji) u `v-alert` komponenti.
+
+S obzirom na to da serverske operacije mogu potrajati neko vrijeme, ovisno o stanju internetske veze i zagušenja servera, uvodimo i sljedeće promjene:
+
+- `TaskItem` neka prima novo svojstvo `isMutating: boolean`. U `App.vue` postavite ga kao `:isMutating="updatingTaskIds.includes(task.id) || deletingTaskIds.includes(task.id)"`.
+- Unutar `TaskItem` komponente, na `v-list-item` komponenti postavite `:disabled="isMutating"`. Vuetify time blokira `@click` handler i CSS stilom signalizira da je ta stavka liste onemogućena. Na delete gumbu unutar reda koristite `:loading="isMutating"` (Vuetify prikazuje animaciju umjesto ikone i blokira klik).
+- `TaskForm` neka prima svojstvo `isMutating: boolean`. U `App.vue` izračunajte ga kao: kreiranje u tijeku (`createMutation.isPending`) ili je u tijeku mijenjanje zadatka koji se uređuje (`editingId !== null && (updatingTaskIds.includes(editingId) || deletingTaskIds.includes(editingId))`). Na gumbu unutar forme postavite `:loading="isMutating"`.
+
+Sve komponente možete kopirati iz Zadatka 4 i dodati opisane promjene. Datoteka `ConfirmModal.vue` ostaje ista kao ranije.
+
+## Zadatak 7
+
+U ovom zadatku mijenjamo rješenje prethodnog zadatka. Umjesto `v-list` komponente koja je prikazivala sve zadatke odjednom, koristimo `v-data-table-server` komponentu koja prikazuje samo jednu stranicu zadataka. Među filtere dodajte i Search, tj. tekstualno polje koje filtrira zadatke na način da su prikazani samo zadaci koji sadrže upisan tekst. Filtriranje (pretragu, status i prioritet) prebacite na server (koristite npr. `Task.objects.filter(...)`). Promjena bilo kojeg filtera neka resetira paginaciju na prvu stranicu. 
+
+Kako bi klijent mogao zatražiti svoju veličinu stranice (`v-data-table-server` omogućava odabir veličine stranice) kroz `page_size` URL query parametar, u datoteci `api/views.py` dodajte sljedeći kod, i potom koristite tu klasu u ostatku datoteke `api/views.py` umjesto klase `PageNumberPagination`:
+
+```python
+class TaskPagination(PageNumberPagination):
+    page_size_query_param = 'page_size'
+```
+
+U svim `onSuccess` funkcijama gdje smo do sada mijenjali stanje koristeći `queryClient.setQueryData`, u ovom zadatku koristite `queryClient.invalidateQueries({ queryKey: ['tasks'] })`, jer prisutnost filtriranja i paginacije komplicira mijenjanje lokalnih podataka.
+
+Kako za prikaz pojedinog zadatka već imamo komponentu `TaskItem`, nećemo koristiti uobičajen tablični prikaz koji koristi komponenta `v-data-table-server`. Kod bi trebao imati ovakvu strukturu:
+
+```vue
+<v-data-table-server
+   ...
+>
+   <template #item="{ item }">
+     <tr>
+       <td :colspan="tableHeaders.length" class="pa-0">
+         <TaskItem ... />
+       </td>
+     </tr>
+   </template>
+</v-data-table-server>
+```
+
+`v-data-table-server` podržava i sortiranje po stupcima klikom na ime stupca. Dodajte podršku za sortiranje za naš (jedini) stupac. Neka sortiranje bude sortiranje po vremenu izrade zadatka. U backend API-u osim filtera trebat će stoga primiti i trenutno zatražen poredak sortiranja (ako postoji).
+
+Uz to, dodajte u backend novi model `AuditLog` koji bilježi svaku promjenu u zadacima. Pri svakom stvaranju, izmjeni ili brisanju zadatka treba zapisati novi `AuditLog` redak s referencom na Django korisnika koji je napravio izmjenu (koristite isti tip autentikacije kao do sada) i tipom akcije. Ako se radi o promjeni zadatka, treba pisati novo stanje zadatka kao JSON tekst (npr. `old_state` i `new_state`).
