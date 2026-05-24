@@ -1108,3 +1108,541 @@ Kako za prikaz pojedinog zadatka već imamo komponentu `TaskItem`, nećemo koris
 `v-data-table-server` podržava i sortiranje po stupcima klikom na ime stupca. Dodajte podršku za sortiranje za naš (jedini) stupac. Neka sortiranje bude sortiranje po vremenu izrade zadatka. U backend API-u osim filtera trebat će stoga primiti i trenutno zatražen poredak sortiranja (ako postoji).
 
 Uz to, dodajte u backend novi model `AuditLog` koji bilježi svaku promjenu u zadacima. Pri svakom stvaranju, izmjeni ili brisanju zadatka treba zapisati novi `AuditLog` redak s referencom na Django korisnika koji je napravio izmjenu (koristite isti tip autentikacije kao do sada) i tipom akcije. Ako se radi o promjeni zadatka, treba pisati novo stanje zadatka kao JSON tekst (npr. `old_state` i `new_state`).
+
+
+
+## Azure *deployment*
+
+Postavit ćemo našu aplikaciju na Azure. Ova sekcija pretpostavlja da je implementirana aplikacija s frontendom i backendom, i oboje je integrirano s autentikacijom koristeći OIDC i Entra ID.
+
+Azure resursi koje koristimo:
+- App Registration: registracija klijenta i resursa (u našem slučaju koristimo jednu registraciju koja predstavlja oboje) kako bismo mogli koristiti OIDC autentikaciju. U nastavku koristimo naš postojeći App Registration.
+- Resource group: logička grupa resursa, služi za organizaciju i upravljanje resursima. Svi resursi (osim App Registrationa) koje ćemo stvoriti bit će unutar iste grupe resursa.
+- Azure Container Registry (ACR): privatni Docker registry na Azureu, gdje ćemo pohranjivati Docker slike koje sadrže kod naše aplikacije. Imat ćemo dvije Docker slike: jednu za frontend i jednu za backend.
+- Container Apps environment: logičko okruženje za Azure Container Apps, koje dijeli resurse poput virtualne mreže i omogućuje komunikaciju između aplikacija unutar istog okruženja. U našem slučaju imamo samo jedan Environment i unutar njega jedan App.
+- Container App (ACA): servis koji će pokretati Docker kontejnere (na temelju Docker slika koje smo spremili ACR) i omogućiti im pristup s Interneta. Imat ćemo jedan Container App koji će unutar sebe imati dva kontejnera (frontend i backend).
+- Managed identity: identitet koji će Container App koristiti za autentikaciju na ACR-u, kako bi mogao preuzimati Docker slike prilikom pokretanja servera.
+- Azure Database for PostgreSQL: PostgreSQL servis na Azureu.
+- Service principal: račun koji će GitHub Actions koristiti za autentikaciju na Azureu i pokretanje deploymenta.
+
+Ovako izgleda arhitektura aplikacije i njenih ovisnosti. Strelice pokazuju tko otvara vezu prema kome; Managed Identity i Service Principal označeni su kao oznake na odgovarajućim strelicama.
+
+```mermaid
+---
+config:
+  layout: elk
+  theme: neutral
+---
+%% scale: 0.95
+graph LR
+    User(["Web Browser"])
+    GH([GitHub])
+    AR(["App Registration (Entra ID)"])
+
+    subgraph RG["Resource Group"]
+        direction LR
+        ACR[("Container Registry")]
+        subgraph ACAenv["Container Apps Environment"]
+            subgraph ACA["Container App"]
+                subgraph frontend["Frontend Container"]
+                    nginx[(Nginx)]
+                    vue[("Vue aplikacija")]
+                end
+                subgraph backend["Backend Container"]
+                    gunicorn[(Gunicorn)]
+                    django[("Django API")]
+                end 
+            end
+        end
+        PG[(PostgreSQL)]
+    end
+
+    User -->|HTTPS| ACA
+    User -->|OIDC| AR
+    ACA -->|"Preuzimanje slika za kontejnere<br/>(koristi Managed Identity)"| ACR
+    django -->|"Preuzimanje javnih ključeva"| AR
+    django -->|SQL naredbe| PG
+    gunicorn -->|Poziva| django
+    nginx -->|Poslužuje| vue
+    nginx -->|Reverse proxy /api| gunicorn
+    User -->|"Poziva"| nginx
+    GH -->|"Slanje Docker slika<br/>(koristi Service Principal)"| ACR
+    GH -->|"Konfiguracija i restart ACA<br/>(koristi Service Principal)"| ACA
+```
+
+
+Faze razvoja i životnog ciklusa uobičajene aplikacije koja koristi DevOps principe i Azure kao cloud platformu:
+1. Postavljanje Azure resursa (jednokratno), uključujući App Registration, Container Registry, Container Apps environment, Container App i PostgreSQL bazu, koristeći Azure CLI i/ili Azure Portal.
+2. Postavljanje git repozitorija i CI/CD pipelinea (jednokratno), koristeći GitHub Actions.
+3. Promjene izvornog koda radimo u zasebnoj git grani (tzv. *feature branch*).
+4. Kad su promjene spremne, na *feature* grani napravimo `git merge` s `main` granom kako bismo riješili konflikte s posljednjim dostupnim promjenama iz glavne grane repozitorija. Nakon toga imamo dvije opcije:
+- Ako na projektu radi više ljudi, napravimo Pull Request (GitHub, Azure DevOps) ili Merge Request (GitLab) i netko drugi pregledava i odobrava promjene, a zatim ih uključuje u `main` granu.
+- Ako radimo sami, možemo se lokalno prebaciti na `main` granu i napraviti `git merge` s *feature* granom, te potom `git push`.
+5. U oba slučaja, kad se na `main` grani repozitorija pojave promjene, aktivira se CI/CD pipeline koji postavlja novu verziju aplikacije na Azure Container Apps. To uključuje *build* (izgradnju) i *push* (kopiranje) Docker slika u Azure Container Registry (kopiranje izgrađene Docker arhive na ACR server), te osvježavanje ACA aplikacije s novim Docker slikama. Također uključuje pokretanje svih eventualnih migracija baze podataka.
+6. Koraci 3 do 5 ponavljaju se kroz životni ciklus projekta.
+
+Čest je pristup da umjesto `main` grane imamo tzv. *development* i *production* grane, te ponekad i druge (*staging*, *pre-production*, *qa*, itd.). Ideja je da svaka grana korespondira međusobno neovisnim cloud resursima, tj. za svaku granu imamo jednu samostalnu instancu aplikacije. Na taj je način lakše testirati promjene prije nego se one učine dostupnima krajnjim korisnicima: sav se razvoj integrira u *development* grani, i tek kad smo sigurni da nema problema, promjene spajamo u produkcijsku granu. Na kolegiju koristimo samo jednu granu (uz eventualne *feature* grane) jer smo ograničeni Azure kreditima.
+
+Kao početnu točku možete koristiti rješenje Zadatka 6. Inicijalizirajte git repozitorij (`git init .`) ako već niste.
+
+### Frontend
+
+U direktoriju `frontend` dodajemo dvije datoteke, `Dockerfile` i `nginx.conf`.
+
+```Dockerfile
+# Builder slika: slika koja gradi našu sliku. Te dvije slike imaju različit sadržaj.
+# Primjerice, slika koja gradi zahtijeva Node jer pokreće `npm`, a naša konačna slika ne treba Node jer ne pokreće `npm`. Prva slika ne treba `nginx`, a druga slika terba `nginx`.
+FROM node:25-alpine AS builder
+
+WORKDIR /app
+# Kopiramo cijeli frontend direktorij (trenutni) u sliku.
+COPY . .
+# Slično kao npm install, ali bez ignoriranja inkonzistentnosti između package.json i package-lock.json.
+RUN npm ci
+
+# Moramo navesti koje environment varijable koristimo.
+ARG VITE_CLIENT_ID
+ARG VITE_TENANT_ID
+# Sada možemo kompajlirati frontend; datoteke će biti stvorene u `dist` direktoriju unutar ove (pomoćne) slike.
+RUN npm run build
+
+FROM nginx:alpine
+# U finalnoj slici trebamo samo kompajlirane datoteke, dakle `/app/dist` iz *builder* slike.
+COPY --from=builder /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/templates/default.conf.template
+
+# U nginx.confg koristimo referencu na BACKEND_HOST; ovdje definiramo njenu vrijednost.
+ENV BACKEND_HOST=localhost
+
+EXPOSE 80
+```
+
+```nginx
+server {
+    # ACA šalje zahtjeve na portu :80, pa nginx zauzima :80.
+    listen 80;
+    server_name _;
+
+    # Gdje se nalaze HTML i ostale datoteke, ovo je standardna lokacija za nginx.
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Reverse-proxy za API, slično kao što Viteov development server.
+    # BACKEND_HOST bit će "localhost" jer se oba backend kontejner nalazi u istoj mreži.
+    location /api/ {
+        proxy_pass http://${BACKEND_HOST}:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Za URL-ove koji ne započinju s /api/, pokušamo pronaći datoteku odgovarajućeg naziva.
+    # Ako ne uspijemo, vraćamo index.html, jer su Vue aplikacije *Single Page Application*, tj. jedna HTML stranica obuhvaća cijeli frontend.
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # URL-ovi koji počinju s /assets/ sadrže JavaScript, CSS, slike i druge datoteke koje koristimo u frontendu.
+    # Ne koriste se originalna imena odgovarajućih datoteka, već hashevi njihovog sadržaja.
+    # Primjerice, umjesto logo.png, mogli bismo imati logo.1a2b3c.png, gdje "1a2b3c" predstavlja hash sadržaja datoteke.
+    # To znači da se imena neće mijenjati dok se sadržaj ne promijeni, pa je cache efikasan.
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+}
+```
+
+### Backend
+
+U direktoriju `backend` dodajemo `Dockerfile` i mijenjamo `config/settings.py`.
+
+U Dockerfileu put ne koristimo *builder* sliku, jer u našoj `backend` slici nema kompilacije (Python datoteke ne kompajliramo unaprijed, za razliku od Vue datoteka).
+
+```Dockerfile
+# Za razliku od frontend Dockerfilea, ovdje nemamo posebnu builder sliku.
+# To je stoga što Python kod ne kompajliramo; na serveru pokrećemo izvorni kod backenda.
+
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Nije nam potrebno virtualno okruženje jer je unutar Docker containera ovo jedina Python aplikacija.
+RUN pip install poetry
+
+COPY pyproject.toml poetry.lock ./
+RUN poetry config virtualenvs.create false \
+    && poetry install --only main --no-interaction --no-root
+
+COPY . .
+RUN python manage.py collectstatic --noinput
+
+# Backend aplikacija neće biti javno dostupna, ali mora biti dostupna frontend aplikaciji.
+EXPOSE 8000
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "4"]
+```
+
+Promjene u `config/settings.py`:
+```python
+# Mijenjamo DATABASES = { ... } sa sljedećim kodom:
+if os.environ.get("DB_ENGINE"):
+    DATABASES = {
+        "default": {
+            "ENGINE": os.environ["DB_ENGINE"],
+            "NAME": os.environ.get("DB_NAME", ""),
+            "USER": os.environ.get("DB_USER", ""),
+            "PASSWORD": os.environ.get("DB_PASSWORD", ""),
+            "HOST": os.environ.get("DB_HOST", ""),
+            "PORT": os.environ.get("DB_PORT", ""),
+        },
+    }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        },
+    }
+
+# Konfiguriramo Django statičke datoteke (u našem slučaju, CSS i JavaScript kojeg koristi automatski generirano sučelje).
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# Isključujemo DEBUG kako bi informacije o greškama bile manje informativne na javnom Internetu (npr. ne želimo da svatko može vidjeti imena Python datoteka u *stack traceu*).
+DEBUG = False
+
+# Kad je DEBUG postavljen na False, Django zahtijeva da se eksplicitno navede server s kojeg stižu zahtjevi
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.environ.get("ALLOWED_HOSTS").split(",")
+    if host.strip()
+] if os.environ.get("ALLOWED_HOSTS") else ["localhost"]
+
+# Možemo postaviti i CORS pravila, iako u našem slučaju nije potrebno
+CORS_ALLOWED_ORIGINS = [
+    f"https://{host.strip()}" 
+    for host in os.environ.get("ALLOWED_HOSTS").split(",")
+] if os.environ.get("ALLOWED_HOSTS") else ["http://localhost:5173"]
+```
+
+
+### Priprema za stvaranje Azure resursa
+
+Za stvaranje Azure resursa koristimo Azure CLI (`az` u terminalu) i Azure Portal.
+
+Ako u projektu već ne postoji `.env` datoteka, stvorite ju i u nju upišite `VITE_CLIENT_ID` i `VITE_TENANT_ID` koje ste dobili prilikom stvaranja App Registrationa:
+```bash
+VITE_CLIENT_ID=...
+VITE_TENANT_ID=...
+```
+
+Prvo u terminalu postavljamo proizvoljnu oznaku (npr. prvo slovo imena i prezime, bez dijakritika, npr. `aivic` za Ana Ivić) i generiramo lozinku za bazu. U ovom bloku trebate ispuniti vrijednosti za prve dvije varijable.
+
+```bash
+IPREZIME=vaša odabrana oznaka
+SUB_ID=Subscription ID koji piše u mailu koji je poslao Azure
+VITE_CLIENT_ID=popunite jednako kako ste popunili u `.env` datoteci
+VITE_TENANT_ID=popunite jednako kako ste popunili u `.env` datoteci
+PG_PASSWORD=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 64)
+```
+
+Provjerite da su varijable ispravno postavljene:
+
+```bash
+echo $IPREZIME
+echo $SUB_ID
+echo $VITE_CLIENT_ID
+echo $VITE_TENANT_ID
+echo $PG_PASSWORD
+```
+
+Za posljednju varijablu očekujemo niz od 64 nasumična slova i brojeva.
+
+Sada možemo generirati prvu verziju `.env.azure` datoteke. Ona će sadržavati neke podatke koje ćemo često ponavljati u naredbama. Neke vrijednosti u toj datoteci još ne znamo i njih ćemo upisati kasnije.
+ Kopirajte, zalijepite (bez promjena) čitav sljedeći blok u terminal, i pokrenite.
+
+```bash
+cat > .env.azure << EOF
+# Osobna oznaka
+IPREZIME=$IPREZIME
+
+# Azure App Registration (popunite )
+VITE_CLIENT_ID=$VITE_CLIENT_ID
+VITE_TENANT_ID=$VITE_TENANT_ID
+
+# Azure infrastruktura (IDENTITY_ID popunjavamo kasnije)
+RG=rg-rgks-$IPREZIME
+LOCATION=italynorth
+ACR=acrrgks${IPREZIME}
+IDENTITY_ID=
+ACA_ENV=env-rgks-$IPREZIME
+ACA_APP=app-rgks-$IPREZIME
+IDENTITY=id-rgks-$IPREZIME
+SUB_ID=$SUB_ID
+
+# Azure PostgreSQL
+PG_SERVER=pg-rgks-$IPREZIME
+PG_DB=rgks
+PG_USER=pgadmin
+PG_PASSWORD=$PG_PASSWORD
+EOF
+```
+
+Na kraju učitajte varijable u trenutni terminal:
+
+```bash
+set -a; source .env.azure; set +a
+```
+
+Posljednju naredbu ponovite svaki put kad otvorite novi terminal i u tom terminalu želite koristiti Azure CLI (`az`).
+
+
+### Stvaranje Azure resursa
+
+Redom stvaramo grupu resursa, Azure Container Registry i Container Apps environment. 
+
+```bash
+az login
+
+az group create --name $RG --location $LOCATION
+az acr create --resource-group $RG --name $ACR --sku Basic
+az containerapp env create --name $ACA_ENV --resource-group $RG --location $LOCATION
+```
+
+ACA mora moći preuzeti Docker slike iz ACR-a. Stvaramo managed identity s `acrPull` ulogom za ACA, kako bi ACA imao dopuštenje preuzimati slike iz ACR-a.
+
+```bash
+az identity create --name $IDENTITY --resource-group $RG
+```
+
+Pričekajte nekoliko sekundi (propagacija identiteta) i potom pokrenite sljedeće naredbe:
+
+```bash
+IDENTITY_ID=$(az identity show --name $IDENTITY --resource-group $RG --query id -o tsv)
+IDENTITY_PRINCIPAL=$(az identity show --name $IDENTITY --resource-group $RG --query principalId -o tsv)
+ACR_ID=$(az acr show --name $ACR --query id -o tsv)
+az role assignment create --assignee $IDENTITY_PRINCIPAL --role acrPull --scope $ACR_ID
+```
+
+Ispunite `IDENTITY_ID` vrijednost (saznajte ju s `echo $IDENTITY_ID`) u datoteci `.env.azure` i ponovno učitajte varijable:
+
+```bash
+set -a; source .env.azure; set +a
+```
+
+Sad postavljamo najvažniji dio, Azure Container App. 
+To je servis (jedan od servisa) koji pokreće Docker kontejnere na Azureu.
+
+Docker slike sada gradimo lokalno kako bismo postavili vrijednosti nekih varijabli koje nećemo mijenjati (podaci korisničkog računa za bazu podataka i `ALLOWED_HOSTS` varijabla), te kako bismo testirali proces deploymenta. U budućnosti će se izgradnja događati na GitHubovim serverima (GitHub Actions). Ako radite u praktikumu, u terminalu pokrenite:
+
+```bash
+# Potrebno pokrenuti samo na računalima u Praktikumu 2
+setup-docker
+```
+
+Napomena: sad ćemo Docker slike nazvati (*tag*) s oznakom `latest` radi jednostavnosti, ali u stvarnom projektu preporučljivo je koristiti jedinstvene oznake (npr. s timestampom ili hashom commita) kako bismo mogli imati više verzija slika i lakše se vratiti na prethodnu verziju ako zatreba.
+
+```bash
+# Izgradnja i push Docker slika
+az acr login --name $ACR
+docker build -t $ACR.azurecr.io/rgks-frontend:latest ./frontend \
+  --build-arg VITE_CLIENT_ID=$VITE_CLIENT_ID \
+  --build-arg VITE_TENANT_ID=$VITE_TENANT_ID
+docker build -t $ACR.azurecr.io/rgks-backend:latest ./backend
+docker push $ACR.azurecr.io/rgks-frontend:latest
+docker push $ACR.azurecr.io/rgks-backend:latest
+```
+
+Sad stvaramo Container App (apstrakcija za jedan ili više povezanih kontejnera) s oba kontejnera (frontend i backend).
+Pritom će frontend biti 'glavni' kontejner, a backend će biti 'sidecar' kontejner. 
+To znači da će se oba kontejnera pokrenuti zajedno, ali frontend će biti onaj koji prima HTTP zahtjeve s Interneta, dok će backend biti dostupan samo unutar aplikacije. 
+Mogli smo i oba učiniti dostupna javno uz malo drugačije CORS postavke.
+
+```bash
+az containerapp create \
+  --name $ACA_APP \
+  --resource-group $RG \
+  --environment $ACA_ENV \
+  --ingress external --target-port 80 \
+  --user-assigned $IDENTITY_ID \
+  --registry-server $ACR.azurecr.io \
+  --registry-identity $IDENTITY_ID \
+  --image $ACR.azurecr.io/rgks-frontend:latest \
+  --container-name frontend \
+  --env-vars BACKEND_HOST=localhost
+```
+
+Prije nego dodamo i backend kontejner, trebamo saznati domenu naše aplikacije.
+Naime, backend provjerava da joj zahtjev dolazi s ispravne domene (`ALLOWED_HOSTS` u Django postavkama).
+
+Domene se mogu konfigurirati u Container Apps sučelju Azure Portala, no mi ćemo koristiti automatski dodijeljenu domenu (koja je oblika `*.italynorth.azurecontainerapps.io`). 
+Da bismo saznali domenu, pokrenite:
+```bash
+DOMAIN=$(az containerapp show --name $ACA_APP --resource-group $RG --query properties.configuration.ingress.fqdn -o tsv)
+echo $DOMAIN
+```
+Alternativno, možete otvoriti ACA aplikaciju u Azure Portalu i pronaći domenu u Overview sekciji.
+Sad možemo dodati backend kontejner.
+
+```bash
+az containerapp update \
+  --name $ACA_APP \
+  --resource-group $RG \
+  --container-name backend \
+  --image $ACR.azurecr.io/rgks-backend:latest \
+  --set-env-vars \
+    VITE_TENANT_ID=$VITE_TENANT_ID \
+    VITE_CLIENT_ID=$VITE_CLIENT_ID \
+    DB_ENGINE=django.db.backends.postgresql \
+    DB_NAME="$PG_DB" \
+    DB_USER="$PG_USER" \
+    DB_PASSWORD="$PG_PASSWORD" \
+    DB_HOST="$PG_SERVER.postgres.database.azure.com" \
+    DB_PORT=5432 \
+    ALLOWED_HOSTS="$DOMAIN"
+```
+
+Posljednji novi resurs koji nam treba jest baza. Najjednostavnija Azure opcija jest "Azure Database for PostgreSQL Flexible Server". Stvaramo server i bazu unutar tog servera.
+
+```bash
+az postgres flexible-server create \
+  --resource-group $RG \
+  --name $PG_SERVER \
+  --admin-user $PG_USER \
+  --admin-password $PG_PASSWORD \
+  --sku-name Standard_B1ms \
+  --tier Burstable \
+  --public-access 0.0.0.0
+
+az postgres flexible-server db create \
+  --resource-group $RG \
+  --server-name $PG_SERVER \
+  --database-name $PG_DB
+```
+
+Trebamo inicijalizirati bazu pokretanjem migracija. 
+To možemo učiniti tako da se spojimo na backend kontejner i pokrenemo `python manage.py migrate` unutar kontejnera.
+```bash
+az containerapp exec \
+  --name "$ACA_APP" \
+  --resource-group "$RG" \
+  --container backend \
+  --command "python manage.py migrate --noinput"
+```
+
+Prije nego pokrenemo aplikaciju, trebamo App Registrationu javiti domenu naše aplikacije.
+Domenu dodajte kao "Redirect URI" u App Registrationu: Azure Portal -> App registrations -> ime aplikacije -> Manage -> Authentication -> Single-page application (SPA) -> Edit -> dodajte sadržaj svoje DOMAIN varijabli uz postojeći `localhost` URL.
+
+Posjetite URL i provjerite radi li aplikacija. Ako nešto ne radi, logove možete provjeriti kroz *Log stream* na Azure Portalu (Container Apps).
+
+### GitHub integracija
+
+Želimo automatizirati deployment na Azure koristeći GitHub Actions. Dakle, umjesto da sami pokrećemo ranije navedene naredbe (`docker build`, `docker push`, `az containerapp update`, `az containerapp exec`), kad god se na `main` grani pojavi commit, aplikacija će izgraditi Docker slike i poslati ih na ACR te osvježiti ACA.
+
+Ako već nemate, stvorite privatan git repozitorij. Ovako možete konfigurirati `.gitignore`:
+```gitignore
+.env
+frontend/node_modules
+frontend/dist
+backend/.venv
+```
+
+Kako bi GitHub Actions mogao upravljati s Azureom resursima, trebamo stvoriti *service principal*, identitet s kojim će se GitHub Actions autenticirati na Azureu. Treba dovoljno široke ovlasti koje bismo mogli postaviti ručno, ili koristimo "contributor" ulogu koja će nam dati nadskup potrebnih dopuštenja.
+
+```bash
+az ad sp create-for-rbac \
+  --name "sp-rgks-$IPREZIME" \
+  --role contributor \
+  --scopes /subscriptions/$SUB_ID/resourceGroups/$RG \
+  --json-auth
+```
+
+Dodajte JSON kao GitHub **repository secret** (Settings, Secrets and variables, Actions, Secrets) pod imenom `AZURE_CREDENTIALS`. Dodajte i sljedeće varijable kao **repository variables** (Settings, Secrets and variables, Actions, Variables). Postavite ih na iste vrijednosti kao u `.env.azure` datoteci:
+
+- `VITE_CLIENT_ID`
+- `VITE_TENANT_ID`
+- `ACR`
+- `RG`
+- `ACA_APP` 
+
+Stvorite datoteku `.github/workflows/deploy.yml` s ovim sadržajem:
+
+```yaml
+name: Deploy to Azure Container Apps
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: ACR Login
+        run: az acr login --name ${{ vars.ACR }}
+
+      - name: Build & push backend image
+        run: |
+          docker build \
+            -t ${{ vars.ACR }}.azurecr.io/rgks-backend:${{ github.sha }} \
+            ./backend
+          docker push ${{ vars.ACR }}.azurecr.io/rgks-backend:${{ github.sha }}
+
+      - name: Build & push frontend image
+        run: |
+          docker build \
+            --build-arg VITE_CLIENT_ID=${{ vars.VITE_CLIENT_ID }} \
+            --build-arg VITE_TENANT_ID=${{ vars.VITE_TENANT_ID }} \
+            -t ${{ vars.ACR }}.azurecr.io/rgks-frontend:${{ github.sha }} \
+            ./frontend
+          docker push ${{ vars.ACR }}.azurecr.io/rgks-frontend:${{ github.sha }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy multi-container app
+        run: |
+          az containerapp update \
+            --name ${{ vars.ACA_APP }} \
+            --resource-group ${{ vars.RG }} \
+            --set-env-vars \
+              BACKEND_HOST=localhost \
+            --container-name frontend \
+            --image ${{ vars.ACR }}.azurecr.io/rgks-frontend:${{ github.sha }}
+
+          az containerapp update \
+            --name ${{ vars.ACA_APP }} \
+            --resource-group ${{ vars.RG }} \
+            --container-name backend \
+            --image ${{ vars.ACR }}.azurecr.io/rgks-backend:${{ github.sha }}
+
+      - name: Run migrations
+        run: |
+          script -qec "az containerapp exec \
+            --name ${{ vars.ACA_APP }} \
+            --resource-group ${{ vars.RG }} \
+            --container backend \
+            --command 'python manage.py migrate --noinput'" /dev/null
+```
+
+Napomena: kad smo ranije pozvali `az containerapp update`, postavili smo vrijednosti nekih varijabli koje se vjerojatno neće mijenjati, poput imena baze podataka. Te bismo vrijednosti mogli ponoviti u GitHub varijablama, te referencirati u upravo navedenoj skripti. 
+
+Pokrenite `git add .`, `git commit -m "Initial commit"` i `git push origin main`. Nakon nekoliko minuta trebali biste vidjeti novu verziju aplikacije na URL-u koji piše u varijabli `DOMAIN`. 
+
+## Zadatak 8
+
+U `frontend` kod dodajte dijalog s pozdravnom porukom koja se pojavljuje kad ulogirani korisnik učita aplikaciju. Neka ima gumbe "Ok" i "Don't show again". U oba slučaja poruka se zatvara. Ako korisnik klikne "Don't show again", poruka se više ne smije pojavljivati za tog korisnika. Spremite tu informaciju u novi model `Profile` koji ima vanjski ključ na `User` model. Trebat će vam i `view` koji frontend poziva na početku, kako bi znao treba li prikazati poruku. Jednom kad ova nova funkcionalnost radi lokalno, isprobajte ju i na serveru. 
