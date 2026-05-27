@@ -1157,7 +1157,6 @@ graph LR
         PG[(PostgreSQL)]
     end
 
-    User -->|HTTPS| ACA
     User -->|OIDC| AR
     ACA -->|"Preuzimanje slika za kontejnere<br/>(koristi Managed Identity)"| ACR
     django -->|"Preuzimanje javnih ključeva"| AR
@@ -1165,7 +1164,7 @@ graph LR
     gunicorn -->|Poziva| django
     nginx -->|Poslužuje| vue
     nginx -->|Reverse proxy /api| gunicorn
-    User -->|"Poziva"| nginx
+    User -->|"Poziva (HTTPS)"| nginx
     GH -->|"Slanje Docker slika<br/>(koristi Service Principal)"| ACR
     GH -->|"Konfiguracija i restart ACA<br/>(koristi Service Principal)"| ACA
 ```
