@@ -8,6 +8,7 @@ Ovdje su materijali s nastave iz kolegija Razvoj grafičkih korisničkih sučelj
 
 [Tema 2: Minimalna full-stack aplikacija](./02/README.md)
 
+[Tema 3: Druge teme](./03/README.md)
 
 ## Cloud provideri
 
